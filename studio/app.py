@@ -24,13 +24,8 @@ app = FastAPI(title=APP_TITLE)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
-def _ctx(request: Request, **kwargs) -> dict:
-    return {
-        "request": request,
-        "app_title": APP_TITLE,
-        "app_tagline": APP_TAGLINE,
-        **kwargs,
-    }
+def _ctx(**kwargs) -> dict:
+    return {"app_title": APP_TITLE, "app_tagline": APP_TAGLINE, **kwargs}
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -39,9 +34,9 @@ def dashboard(request: Request):
     runs = [run for p in projects for run in p.runs()]
     findings_count = sum(len(r.findings()) for r in runs)
     return templates.TemplateResponse(
+        request,
         "dashboard.html",
         _ctx(
-            request,
             projects=projects[:5],
             recent_runs=sorted(runs, key=lambda r: r.timestamp, reverse=True)[:10],
             stats={
@@ -57,8 +52,9 @@ def dashboard(request: Request):
 @app.get("/projects", response_class=HTMLResponse)
 def projects_index(request: Request):
     return templates.TemplateResponse(
+        request,
         "projects.html",
-        _ctx(request, projects=list_projects(), projects_dir=str(RAPTOR_PROJECTS_DIR)),
+        _ctx(projects=list_projects(), projects_dir=str(RAPTOR_PROJECTS_DIR)),
     )
 
 
@@ -68,7 +64,7 @@ def project_detail(request: Request, name: str):
     if proj is None:
         raise HTTPException(404, f"project not found: {name}")
     return templates.TemplateResponse(
-        "project.html", _ctx(request, project=proj, runs=proj.runs())
+        request, "project.html", _ctx(project=proj, runs=proj.runs())
     )
 
 
@@ -83,8 +79,9 @@ def findings(request: Request, name: str, run_name: str):
     if run is None:
         raise HTTPException(404, f"run not found: {run_name}")
     return templates.TemplateResponse(
+        request,
         "findings.html",
-        _ctx(request, project=proj, run=run, findings=run.findings()),
+        _ctx(project=proj, run=run, findings=run.findings()),
     )
 
 
