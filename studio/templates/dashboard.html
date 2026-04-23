@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ app_title }}{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <h1>Dashboard</h1>
+  <div class="sub">Reading <code class="mono">{{ projects_dir }}</code></div>
+</div>
+
+<div class="grid g4" style="margin-bottom: 20px;">
+  <div class="card kpi"><span class="num">{{ stats.projects }}</span><span class="label">Projects</span></div>
+  <div class="card kpi"><span class="num">{{ stats.runs }}</span><span class="label">Runs</span></div>
+  <div class="card kpi"><span class="num">{{ stats.findings }}</span><span class="label">Findings</span></div>
+  <div class="card kpi"><span class="num mono" style="font-size: 14px; padding-top: 10px;">read-only</span><span class="label">Mode</span></div>
+</div>
+
+{% if projects %}
+<div class="grid g2">
+  <div class="card">
+    <h2>Recent projects</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Target</th><th>Runs</th></tr></thead>
+      <tbody>
+      {% for p in projects %}
+        <tr>
+          <td><a href="/projects/{{ p.name }}"><strong>{{ p.name }}</strong></a></td>
+          <td class="mono" style="font-size: 12px; color: var(--fg3);">{{ p.target }}</td>
+          <td>{{ p.runs()|length }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Recent runs</h2>
+    {% if recent_runs %}
+    <table>
+      <thead><tr><th>Run</th><th>Kind</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for r in recent_runs %}
+        <tr>
+          <td class="mono" style="font-size: 12px;">{{ r.name }}</td>
+          <td><span class="badge b-neutral">{{ r.kind }}</span></td>
+          <td>
+            {% if r.status == "completed" %}<span class="badge b-ok">complete</span>
+            {% elif r.status == "running" %}<span class="badge b-running">running</span>
+            {% elif r.status == "failed" %}<span class="badge b-failed">failed</span>
+            {% else %}<span class="badge b-neutral">{{ r.status }}</span>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty"><div class="icon">○</div>No runs yet.</div>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="card empty">
+  <div class="icon">∅</div>
+  <p>No raptor projects found at <code>{{ projects_dir }}</code>.</p>
+  <p style="font-size: 12px; color: var(--fg3);">
+    Set <code class="mono">RAPTOR_PROJECTS_DIR</code> to point at an existing install,
+    or run <code class="mono">raptor project create &lt;name&gt; --target &lt;path&gt;</code>
+    to create one.
+  </p>
+</div>
+{% endif %}
+
+{% endblock %}
