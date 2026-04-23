@@ -10,17 +10,32 @@ Early scaffold. Read-only. Not for production.
 
 ## Quick start
 
+Raptor itself should be cloned to `~/Projects/raptor/` (the default `RAPTOR_HOME`):
+
 ```bash
-pip install -r requirements.txt
-uvicorn studio.app:app --reload
+git clone https://github.com/gadievron/raptor ~/Projects/raptor
+```
+
+Then:
+
+```bash
+cd ~/Projects/raptor-studio
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/uvicorn studio.app:app --reload
 # → http://localhost:8000
 ```
 
-By default, reads projects from `~/.raptor/projects/`. Override with:
+Projects created from the UI land in `~/.raptor/projects/<name>.json` — the same location raptor's own CLI uses, so they are fully interchangeable. Output dirs default to `$RAPTOR_HOME/out/projects/<name>`.
 
-```bash
-RAPTOR_PROJECTS_DIR=/path/to/projects uvicorn studio.app:app --reload
-```
+## Environment
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `RAPTOR_PROJECTS_DIR` | `~/.raptor/projects` | Where raptor stores project registry entries (read + write) |
+| `RAPTOR_HOME` | `~/Projects/raptor` | Location of raptor source checkout |
+| `RAPTOR_OUTPUT_BASE` | `$RAPTOR_HOME/out/projects` | Default base path for new projects' output dirs |
+| `STUDIO_DATA_DIR` | `~/.raptor-studio` | Reserved: studio's own cache / provenance sidecars |
 
 ## Structure
 
@@ -51,6 +66,7 @@ Phase 1 (read-only):
 - [ ] Exploit PoC browser
 
 Phase 2 (interactive):
+- [x] Create new project (writes raptor-compatible JSON)
 - [ ] Scan trigger from UI
 - [ ] Live run monitoring
 - [ ] Run diff (resolved / carried / new findings)

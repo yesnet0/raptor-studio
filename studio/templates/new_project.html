@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}New project — {{ app_title }}{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <h1>New project</h1>
+  <div class="sub">Writes to <code class="mono">{{ projects_dir }}</code></div>
+</div>
+
+{% if error %}
+<div class="card" style="border-color: var(--crit); background: rgba(211,47,47,0.08); margin-bottom: 16px;">
+  <strong style="color: var(--crit);">Error:</strong> {{ error }}
+</div>
+{% endif %}
+
+<div class="card" style="max-width: 680px;">
+<form method="post" action="/projects/new" style="display: grid; gap: 16px;">
+  <label>
+    <div style="font-size: 12px; color: var(--fg2); margin-bottom: 4px; font-weight: 600;">Name</div>
+    <input name="name" type="text" required pattern="[a-zA-Z0-9][a-zA-Z0-9._-]*" autofocus
+           value="{{ form.name or '' }}"
+           style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 14px;">
+    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Letters, numbers, hyphens, dots, underscores. Cannot start with <code class="mono">.</code> or <code class="mono">_</code>.</div>
+  </label>
+
+  <label>
+    <div style="font-size: 12px; color: var(--fg2); margin-bottom: 4px; font-weight: 600;">Target path</div>
+    <input name="target" type="text" required
+           value="{{ form.target or '' }}"
+           placeholder="/absolute/path/to/codebase"
+           style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Path to the code raptor will analyze. Resolved to absolute; does not need to exist yet.</div>
+  </label>
+
+  <label>
+    <div style="font-size: 12px; color: var(--fg2); margin-bottom: 4px; font-weight: 600;">Description <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+    <input name="description" type="text"
+           value="{{ form.description or '' }}"
+           placeholder="One-line description"
+           style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 14px;">
+  </label>
+
+  <label>
+    <div style="font-size: 12px; color: var(--fg2); margin-bottom: 4px; font-weight: 600;">Output directory <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+    <input name="output_dir" type="text"
+           value="{{ form.output_dir or '' }}"
+           placeholder="{{ default_output }}"
+           style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Where raptor writes scan outputs. Defaults to shown path (created if missing).</div>
+  </label>
+
+  <div style="display: flex; gap: 10px; margin-top: 8px;">
+    <button type="submit" class="btn btn-p">Create project</button>
+    <a href="/projects" class="btn">Cancel</a>
+  </div>
+</form>
+</div>
+
+{% endblock %}

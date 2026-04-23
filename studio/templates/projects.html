@@ -2,9 +2,12 @@
 {% block title %}Projects — {{ app_title }}{% endblock %}
 {% block content %}
 
-<div class="page-head">
-  <h1>Projects</h1>
-  <div class="sub">All raptor projects registered in <code class="mono">{{ projects_dir }}</code></div>
+<div class="page-head" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;">
+  <div>
+    <h1>Projects</h1>
+    <div class="sub">All raptor projects registered in <code class="mono">{{ projects_dir }}</code></div>
+  </div>
+  <a href="/projects/new" class="btn btn-p">+ New project</a>
 </div>
 
 {% if projects %}

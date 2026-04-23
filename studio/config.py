@@ -17,6 +17,10 @@ RAPTOR_HOME = Path(
     os.environ.get("RAPTOR_HOME", Path.home() / "Projects" / "raptor")
 )
 
+RAPTOR_OUTPUT_BASE = Path(
+    os.environ.get("RAPTOR_OUTPUT_BASE", RAPTOR_HOME / "out" / "projects")
+)
+
 STUDIO_DATA_DIR = Path(
     os.environ.get("STUDIO_DATA_DIR", Path.home() / ".raptor-studio")
 )

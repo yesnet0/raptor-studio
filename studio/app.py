@@ -9,13 +9,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from studio.config import APP_TAGLINE, APP_TITLE, RAPTOR_PROJECTS_DIR
+from studio.config import (
+    APP_TAGLINE,
+    APP_TITLE,
+    RAPTOR_OUTPUT_BASE,
+    RAPTOR_PROJECTS_DIR,
+)
 from studio.services.raptor_reader import get_project, list_projects
+from studio.services.raptor_writer import ProjectCreateError, create_project
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -56,6 +62,58 @@ def projects_index(request: Request):
         "projects.html",
         _ctx(projects=list_projects(), projects_dir=str(RAPTOR_PROJECTS_DIR)),
     )
+
+
+def _new_project_ctx(**overrides):
+    default_output = str((RAPTOR_OUTPUT_BASE.expanduser() / "<name>"))
+    ctx = {
+        "form": {},
+        "error": None,
+        "default_output": default_output,
+        "projects_dir": str(RAPTOR_PROJECTS_DIR),
+    }
+    ctx.update(overrides)
+    return _ctx(**ctx)
+
+
+@app.get("/projects/new", response_class=HTMLResponse)
+def new_project_form(request: Request):
+    return templates.TemplateResponse(
+        request, "new_project.html", _new_project_ctx()
+    )
+
+
+@app.post("/projects/new")
+def new_project_submit(
+    request: Request,
+    name: str = Form(""),
+    target: str = Form(""),
+    description: str = Form(""),
+    output_dir: str = Form(""),
+):
+    try:
+        proj = create_project(
+            name=name.strip(),
+            target=target.strip(),
+            description=description.strip(),
+            output_dir=output_dir.strip() or None,
+        )
+    except ProjectCreateError as e:
+        return templates.TemplateResponse(
+            request,
+            "new_project.html",
+            _new_project_ctx(
+                form={
+                    "name": name,
+                    "target": target,
+                    "description": description,
+                    "output_dir": output_dir,
+                },
+                error=str(e),
+            ),
+            status_code=400,
+        )
+    return RedirectResponse(url=f"/projects/{proj.name}", status_code=303)
 
 
 @app.get("/projects/{name}", response_class=HTMLResponse)
