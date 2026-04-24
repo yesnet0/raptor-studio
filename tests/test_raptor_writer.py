@@ -102,12 +102,61 @@ def test_create_project_accepts_valid_names(tmp_path: Path):
 
 
 def test_create_project_rejects_missing_target(tmp_path: Path):
-    with pytest.raises(ProjectCreateError, match="Target path is required"):
+    with pytest.raises(ProjectCreateError, match="Target is required"):
         create_project(
             "ok", "",
             projects_dir=tmp_path / "projects",
             output_base=tmp_path / "out",
         )
+
+
+def test_create_forensics_project_accepts_github_url(tmp_path: Path):
+    projects_dir = tmp_path / "projects"
+    proj = create_project(
+        "forensics-test",
+        "https://github.com/aws/aws-toolkit-vscode",
+        project_type="forensics",
+        focus="Investigate the July 13 incident",
+        projects_dir=projects_dir,
+        output_base=tmp_path / "out",
+    )
+    data = json.loads((projects_dir / "forensics-test.json").read_text())
+    # Target stored as-is (no path resolution)
+    assert data["target"] == "https://github.com/aws/aws-toolkit-vscode"
+
+
+def test_create_forensics_rejects_non_url_target(tmp_path: Path):
+    with pytest.raises(ProjectCreateError, match="URL"):
+        create_project(
+            "bad-forensics",
+            "/tmp/not-a-url",
+            project_type="forensics",
+            projects_dir=tmp_path / "projects",
+            output_base=tmp_path / "out",
+        )
+
+
+def test_create_project_rejects_unknown_type(tmp_path: Path):
+    with pytest.raises(ProjectCreateError, match="Invalid project type"):
+        create_project(
+            "bad-type", "/tmp/x",
+            project_type="nonsense",
+            projects_dir=tmp_path / "projects",
+            output_base=tmp_path / "out",
+        )
+
+
+def test_create_project_writes_notes_field(tmp_path: Path):
+    projects_dir = tmp_path / "projects"
+    create_project(
+        "with-notes", "/tmp/x",
+        notes="This project tracks auth flows.\nWatch the middleware.",
+        projects_dir=projects_dir,
+        output_base=tmp_path / "out",
+    )
+    data = json.loads((projects_dir / "with-notes.json").read_text())
+    assert "auth flows" in data["notes"]
+    assert "middleware" in data["notes"]
 
 
 def test_created_project_appears_in_list(tmp_path: Path):

@@ -4,7 +4,7 @@
 
 <div class="page-head">
   <h1>New project</h1>
-  <div class="sub">Writes to <code class="mono">{{ projects_dir }}</code></div>
+  <div class="sub">Writes to <code class="mono">{{ projects_dir }}</code>. Studio extras in <code class="mono">{{ studio_dir }}/project-extras/</code>.</div>
 </div>
 
 {% if error %}
@@ -13,10 +13,28 @@
 </div>
 {% endif %}
 
-<div class="card" style="max-width: 680px;">
-<form method="post" action="/projects/new" style="display: grid; gap: 16px;">
+<div class="card" style="max-width: 760px;">
+<form method="post" action="/projects/new" style="display: flex; flex-direction: column; gap: 14px;">
+
+  <div>
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 8px;">Project type</div>
+    <div class="type-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+      {% for t in project_types %}
+      {% set checked = (form.project_type or 'source') == t.key %}
+      <label class="type-card" data-type="{{ t.key }}" style="
+          display: block; padding: 12px; border: 1px solid {% if checked %}var(--accent){% else %}var(--border){% endif %};
+          border-radius: 8px; cursor: pointer; background: {% if checked %}var(--accent-r){% else %}var(--bg){% endif %};
+          ">
+        <input type="radio" name="project_type" value="{{ t.key }}" {% if checked %}checked{% endif %} style="display: none;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--fg);">{{ t.label }}</div>
+        <div style="font-size: 11px; color: var(--fg2); margin-top: 4px; line-height: 1.4;">{{ t.description }}</div>
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+
   <label>
-    <div style="font-size: 12px; color: var(--fg2); margin-bottom: 4px; font-weight: 600;">Name</div>
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Name</div>
     <input name="name" type="text" required pattern="[a-zA-Z0-9][a-zA-Z0-9._-]*" autofocus
            value="{{ form.name or '' }}"
            style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 14px;">
@@ -24,29 +42,78 @@
   </label>
 
   <label>
-    <div style="font-size: 12px; color: var(--fg2); margin-bottom: 4px; font-weight: 600;">Target path</div>
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">
+      <span data-target-label data-for-source="Repository path" data-for-binary="Binary path" data-for-forensics="GitHub URL">Repository path</span>
+    </div>
     <input name="target" type="text" required
            value="{{ form.target or '' }}"
-           placeholder="/absolute/path/to/codebase"
+           data-target-input
+           data-placeholder-source="/absolute/path/to/code/repo"
+           data-placeholder-binary="/absolute/path/to/compiled/binary"
+           data-placeholder-forensics="https://github.com/owner/repo"
+           placeholder="/absolute/path/to/code/repo"
            style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
-    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Path to the code raptor will analyze. Resolved to absolute; does not need to exist yet.</div>
+    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">
+      <span data-target-help data-for-source="Resolved to absolute; need not exist yet."
+                              data-for-binary="Compiled AFL-instrumented binary (or any binary — QEMU mode fallback)."
+                              data-for-forensics="Public GitHub repository URL; stored as-is (no path resolution).">
+        Resolved to absolute; need not exist yet.
+      </span>
+    </div>
+  </label>
+
+  <label data-show-for="binary">
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Source repo <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+    <input name="binary" type="text"
+           value="{{ form.binary or '' }}"
+           placeholder="Not typical — use if you also want to scan the source this binary was built from"
+           style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Rarely needed. Only set if you want this project to also run source scans against a separate directory.</div>
+  </label>
+
+  <label data-show-for="forensics">
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Research question / focus <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+    <input name="focus" type="text"
+           value="{{ form.focus or '' }}"
+           placeholder='e.g. "What happened with the July 13 incident on this repo?"'
+           style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 13px;">
+    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Framing question for the forensic investigation. Passed through to <code class="mono">/oss-forensics</code> when you trigger it.</div>
+  </label>
+
+  <label data-show-for="source">
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">CodeQL language <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+    <select name="language"
+            style="width: 100%; padding: 7px 8px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 13px;">
+      {% for opt in ['', 'python', 'java', 'javascript', 'cpp', 'go', 'ruby', 'csharp', 'swift'] %}
+        <option value="{{ opt }}" {% if form.language == opt %}selected{% endif %}>{{ opt or "(auto-detect)" }}</option>
+      {% endfor %}
+    </select>
+    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Skips CodeQL's language auto-detection when set. Only matters for CodeQL runs.</div>
   </label>
 
   <label>
-    <div style="font-size: 12px; color: var(--fg2); margin-bottom: 4px; font-weight: 600;">Description <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Description <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
     <input name="description" type="text"
            value="{{ form.description or '' }}"
-           placeholder="One-line description"
+           placeholder="One-line summary"
            style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 14px;">
   </label>
 
   <label>
-    <div style="font-size: 12px; color: var(--fg2); margin-bottom: 4px; font-weight: 600;">Output directory <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Notes <span style="color: var(--fg3); font-weight: 400;">(optional, multiline)</span></div>
+    <textarea name="notes" rows="3"
+              placeholder="Longer context, scope, caveats, links…"
+              style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 13px; resize: vertical;">{{ form.notes or '' }}</textarea>
+    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Stored in raptor's <code class="mono">project.json</code> <code class="mono">notes</code> field. Editable later via <code class="mono">raptor project notes</code>.</div>
+  </label>
+
+  <label>
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Output directory <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
     <input name="output_dir" type="text"
            value="{{ form.output_dir or '' }}"
            placeholder="{{ default_output }}"
            style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
-    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Where raptor writes scan outputs. Defaults to shown path (created if missing).</div>
+    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Where raptor writes run outputs. Defaults to shown path (created if missing).</div>
   </label>
 
   <div style="display: flex; gap: 10px; margin-top: 8px;">
@@ -55,5 +122,41 @@
   </div>
 </form>
 </div>
+
+<script>
+(function() {
+  const cards = document.querySelectorAll('.type-card');
+  const targetLabel = document.querySelector('[data-target-label]');
+  const targetInput = document.querySelector('[data-target-input]');
+  const targetHelp = document.querySelector('[data-target-help]');
+  const conditionalLabels = document.querySelectorAll('label[data-show-for]');
+
+  function setType(kind) {
+    cards.forEach(c => {
+      const selected = c.dataset.type === kind;
+      c.style.borderColor = selected ? 'var(--accent)' : 'var(--border)';
+      c.style.background = selected ? 'var(--accent-r)' : 'var(--bg)';
+      c.querySelector('input').checked = selected;
+    });
+    if (targetLabel) targetLabel.textContent = targetLabel.dataset['forSource' === '' ? '' : 'for' + kind.charAt(0).toUpperCase() + kind.slice(1)] || targetLabel.dataset.forSource;
+    // Simpler: look up the right data attribute
+    const mapLabel = {source: 'forSource', binary: 'forBinary', forensics: 'forForensics'};
+    if (targetLabel) targetLabel.textContent = targetLabel.dataset[mapLabel[kind]] || targetLabel.textContent;
+    if (targetInput) targetInput.placeholder = targetInput.dataset[kind === 'source' ? 'placeholderSource' : kind === 'binary' ? 'placeholderBinary' : 'placeholderForensics'] || '';
+    if (targetHelp) targetHelp.textContent = targetHelp.dataset[mapLabel[kind]] || targetHelp.textContent;
+    conditionalLabels.forEach(lbl => {
+      lbl.style.display = lbl.dataset.showFor === kind ? '' : 'none';
+    });
+  }
+
+  cards.forEach(card => {
+    card.addEventListener('click', () => setType(card.dataset.type));
+  });
+
+  // Initial state — respect the form value or default to 'source'
+  const initial = document.querySelector('input[name="project_type"]:checked')?.value || 'source';
+  setType(initial);
+})();
+</script>
 
 {% endblock %}

@@ -9,7 +9,15 @@
 {% block project_content %}
 
 <h1 style="margin: 0; font-size: 22px;">{{ spec.label }}</h1>
-<div style="color: var(--fg2); font-size: 13px; margin: 4px 0 16px;">{{ spec.description }}</div>
+<div style="color: var(--fg2); font-size: 13px; margin: 4px 0 8px;">{{ spec.description }}</div>
+{% if spec.requires_claude %}
+<div style="margin-bottom: 16px;">
+  <span class="badge" style="background: rgba(37,99,235,0.15); color: var(--info);">requires Claude Code</span>
+  <span style="font-size: 11px; color: var(--fg3); margin-left: 6px;">
+    The worker will shell out to <code class="mono">claude -p</code> — make sure <code class="mono">claude</code> is in your <code class="mono">$PATH</code>.
+  </span>
+</div>
+{% endif %}
 
 {% if error %}
 <div class="card" style="border-color: var(--crit); background: rgba(211,47,47,0.08); margin-bottom: 16px;">
@@ -70,9 +78,13 @@
     <div style="font-size: 10px; color: var(--fg3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">
       Equivalent CLI
     </div>
-    <pre class="mono" style="margin: 0; padding: 0; background: transparent; font-size: 11px; white-space: pre-wrap; word-break: break-all;">python3 {{ spec.script }} {{ spec.target_arg }} {{ form.target or project.target }} {{ preview_flags }}</pre>
+    <pre class="mono" style="margin: 0; padding: 0; background: transparent; font-size: 11px; white-space: pre-wrap; word-break: break-all;">{% if spec.requires_claude %}{{ preview_flags }}{% else %}python3 {{ spec.script }} {{ spec.target_arg }} {{ form.target or project.target }} {{ preview_flags }}{% endif %}</pre>
     <div style="font-size: 11px; color: var(--fg3); margin-top: 6px;">
-      Runs from <code class="mono">{{ raptor_home }}</code>. Must have raptor's Python dependencies installed.
+      {% if spec.requires_claude %}
+        Spawned from <code class="mono">{{ raptor_home }}</code> under <code class="mono">bash -c</code>. Needs <code class="mono">claude</code> on <code class="mono">$PATH</code>.
+      {% else %}
+        Runs from <code class="mono">{{ raptor_home }}</code>. Must have raptor's Python dependencies installed.
+      {% endif %}
     </div>
   </div>
 </form>

@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Optional
 
 from studio.config import RAPTOR_PROJECTS_DIR
+from studio.services import project_extras as extras_service
 from studio.services.run_kind import classify as classify_kind
 
 FINDINGS_FILENAMES = (
@@ -102,6 +103,28 @@ class RaptorProject:
     def exists_on_disk(self) -> bool:
         return self.output_dir.is_dir()
 
+    @property
+    def extras(self) -> "extras_service.ProjectExtras":
+        """Studio-side sidecar metadata (type, binary, focus, language)."""
+        return extras_service.load(self.name)
+
+    @property
+    def kind(self) -> Optional[str]:
+        """Project type: 'source' / 'binary' / 'forensics'.
+
+        Prefers the studio sidecar; falls back to inferring from runs.
+        None if neither source is conclusive.
+        """
+        ex = self.extras
+        if ex.type:
+            return ex.type
+        return extras_service.infer_type_from_runs(self.runs())
+
+    @property
+    def target_is_url(self) -> bool:
+        t = self.target or ""
+        return t.startswith(("http://", "https://", "git@", "ssh://"))
+
     def runs(self) -> list[RaptorRun]:
         if not self.output_dir.is_dir():
             return []
@@ -130,7 +153,7 @@ def list_projects(projects_dir: Path = RAPTOR_PROJECTS_DIR) -> list[RaptorProjec
             RaptorProject(
                 name=data.get("name", entry.stem),
                 target=data.get("target", ""),
-                output_dir=Path(data.get("output_dir", "")),
+                output_dir=Path(data.get("output_dir", "")) if data.get("output_dir") else Path(""),
                 description=data.get("description", ""),
                 notes=data.get("notes", ""),
                 created=data.get("created", ""),

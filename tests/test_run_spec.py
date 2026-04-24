@@ -23,11 +23,40 @@ def test_is_runnable_returns_true_for_pure_python_kinds():
     assert is_runnable("fuzz")
 
 
-def test_is_runnable_returns_false_for_claude_only_kinds():
-    assert not is_runnable("understand")
-    assert not is_runnable("validate")
-    assert not is_runnable("oss-forensics")
-    assert not is_runnable("crash-analysis")
+def test_is_runnable_returns_true_for_claude_backed_kinds():
+    # These shell out to `claude -p` under the hood.
+    assert is_runnable("understand")
+    assert is_runnable("validate")
+    assert is_runnable("oss-forensics")
+    assert is_runnable("crash-analysis")
+
+
+def test_claude_backed_kinds_build_claude_wrapper(tmp_path: Path):
+    argv = build_command("understand", "/tmp/app", tmp_path, {"mode": "map"},
+                         project_name="myproj")
+    assert argv[0] == "bash"
+    assert argv[1] == "-c"
+    assert "claude -p" in argv[2]
+    assert "/understand --map /tmp/app" in argv[2]
+    assert "project use myproj" in argv[2]
+
+
+def test_oss_forensics_includes_focus_in_prompt(tmp_path: Path):
+    argv = build_command(
+        "oss-forensics",
+        "https://github.com/owner/repo",
+        tmp_path,
+        {"focus": "July 13 incident"},
+        project_name="p",
+    )
+    assert "/oss-forensics" in argv[2]
+    assert "July 13 incident" in argv[2]
+    assert "github.com/owner/repo" in argv[2]
+
+
+def test_crash_analysis_requires_both_urls(tmp_path: Path):
+    with pytest.raises(ValueError, match="bug_url"):
+        build_command("crash-analysis", "", tmp_path, {}, project_name="p")
 
 
 def test_build_command_agentic_minimal(tmp_path: Path):
@@ -96,21 +125,26 @@ def test_build_command_fuzz_with_options(tmp_path: Path):
 
 def test_build_command_unsupported_kind_raises(tmp_path: Path):
     with pytest.raises(UnsupportedKind):
-        build_command("validate", "/tmp/app", tmp_path, {})
+        build_command("not-a-real-kind", "/tmp/app", tmp_path, {})
 
 
-def test_claude_cli_hint_returns_template_for_claude_only():
+def test_claude_cli_hint_returns_string_for_claude_backed():
     hint = claude_cli_hint("validate", "/tmp/app", "myproj")
+    assert hint is not None
     assert "raptor project use myproj" in hint
     assert "/validate" in hint
 
 
-def test_claude_cli_hint_returns_none_for_runnable():
+def test_claude_cli_hint_returns_none_for_python_entrypoint_kinds():
     assert claude_cli_hint("agentic", "/tmp/app", "myproj") is None
+    assert claude_cli_hint("scan", "/tmp/app", "myproj") is None
+    assert claude_cli_hint("fuzz", "/tmp/bin", "myproj") is None
 
 
-def test_every_runnable_kind_has_target_arg_and_script():
+def test_every_runnable_kind_has_fields():
     for kind, spec in RUNNABLE_KINDS.items():
-        assert spec.script.endswith(".py")
-        assert spec.target_arg in ("--repo", "--binary")
-        assert spec.fields  # non-empty
+        if spec.requires_claude:
+            assert spec.slash_command.startswith("/")
+        else:
+            assert spec.script.endswith(".py")
+            assert spec.target_arg in ("--repo", "--binary")

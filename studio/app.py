@@ -24,6 +24,7 @@ from studio.config import (
     RAPTOR_MODELS_CONFIG,
     RAPTOR_OUTPUT_BASE,
     RAPTOR_PROJECTS_DIR,
+    STUDIO_DATA_DIR,
 )
 from studio.services import jobs as jobs_service
 from studio.services import worker as worker_service
@@ -42,6 +43,11 @@ from studio.services.run_spec import (
 from studio.services.diff_reader import compute_diff
 from studio.services.forensics_reader import is_forensics_run_dir, load_forensics_bundle
 from studio.services.personas import all_personas, personas_for_finding
+from studio.services.project_extras import (
+    PROJECT_TYPE_DESCRIPTIONS,
+    PROJECT_TYPE_LABELS,
+    PROJECT_TYPES,
+)
 from studio.services.validation_reader import load_validation_bundle, summarize_run
 from studio.services.models_reader import (
     PROVIDERS,
@@ -152,10 +158,16 @@ def projects_index(request: Request):
 
 def _new_project_ctx(**overrides):
     default_output = str((RAPTOR_OUTPUT_BASE.expanduser() / "<name>"))
+    type_cards = [
+        {"key": t, "label": PROJECT_TYPE_LABELS[t], "description": PROJECT_TYPE_DESCRIPTIONS[t]}
+        for t in PROJECT_TYPES
+    ]
     ctx = {
         "form": {}, "error": None,
         "default_output": default_output,
         "projects_dir": str(RAPTOR_PROJECTS_DIR),
+        "studio_dir": str(STUDIO_DATA_DIR),
+        "project_types": type_cards,
     }
     ctx.update(overrides)
     return _ctx(**ctx)
@@ -167,26 +179,28 @@ def new_project_form(request: Request):
 
 
 @app.post("/projects/new")
-def new_project_submit(
-    request: Request,
-    name: str = Form(""),
-    target: str = Form(""),
-    description: str = Form(""),
-    output_dir: str = Form(""),
-):
+async def new_project_submit(request: Request):
+    form = await request.form()
+    raw = {k: (form.get(k) or "").strip() for k in
+           ("name", "target", "description", "output_dir", "notes",
+            "project_type", "binary", "focus", "language")}
+
     try:
         proj = create_project(
-            name=name.strip(), target=target.strip(),
-            description=description.strip(),
-            output_dir=output_dir.strip() or None,
+            name=raw["name"],
+            target=raw["target"],
+            description=raw["description"],
+            output_dir=raw["output_dir"] or None,
+            notes=raw["notes"],
+            project_type=raw["project_type"] or None,
+            binary=raw["binary"],
+            focus=raw["focus"],
+            language=raw["language"],
         )
     except ProjectCreateError as e:
         return templates.TemplateResponse(
             request, "new_project.html",
-            _new_project_ctx(
-                form={"name": name, "target": target, "description": description, "output_dir": output_dir},
-                error=str(e),
-            ),
+            _new_project_ctx(form=raw, error=str(e)),
             status_code=400,
         )
     return RedirectResponse(url=f"/projects/{proj.name}", status_code=303)
@@ -352,13 +366,27 @@ def project_settings(request: Request, name: str):
 
 # --- Jobs: trigger + list + detail + cancel + SSE stream -----------------
 
-def _preview_flags(kind: str, form_values: dict, target: str) -> str:
+def _preview_flags(kind: str, form_values: dict, target: str, project_name: str = "") -> str:
     try:
-        argv = build_command(kind, target or "<target>", RAPTOR_HOME, form_values)
+        argv = build_command(
+            kind, target or "<target>", RAPTOR_HOME, form_values, project_name=project_name
+        )
     except (UnsupportedKind, ValueError):
         return ""
+    spec = RUNNABLE_KINDS.get(kind)
+    if spec and spec.requires_claude:
+        # argv is ["bash", "-c", "<combined>"] — surface the combined string.
+        return argv[2] if len(argv) >= 3 else ""
     # Drop "python3 <script>" and the target; show only flags for the preview line.
     return " ".join(argv[3:]) if len(argv) > 3 else ""
+
+
+def _default_target_for(kind: str, proj: RaptorProject) -> str:
+    """Pick a sensible default target for the new-run form based on kind."""
+    spec = RUNNABLE_KINDS.get(kind)
+    if spec and spec.target_arg == "--binary":
+        return proj.extras.binary or proj.target
+    return proj.target
 
 
 @app.get("/projects/{name}/{kind}/new", response_class=HTMLResponse)
@@ -367,13 +395,17 @@ def new_run_form(request: Request, name: str, kind: str):
         raise HTTPException(404, f"Kind '{kind}' cannot be launched from the UI.")
     proj = _require_project(name)
     spec = RUNNABLE_KINDS[kind]
+    default_target = _default_target_for(kind, proj)
+    default_values = {}
+    if kind == "oss-forensics" and proj.extras.focus:
+        default_values["focus"] = proj.extras.focus
     return templates.TemplateResponse(
         request, "project_new_run.html",
         _project_ctx(
             proj, active_stage=kind,
             spec=spec,
-            form={"target": proj.target},
-            preview_flags=_preview_flags(kind, {}, proj.target),
+            form={"target": default_target, **default_values},
+            preview_flags=_preview_flags(kind, default_values, default_target, proj.name),
             raptor_home=str(RAPTOR_HOME),
             error=None,
         ),
@@ -388,18 +420,18 @@ async def new_run_submit(request: Request, name: str, kind: str):
     spec = RUNNABLE_KINDS[kind]
     form = await request.form()
 
-    target = (form.get("target") or "").strip() or proj.target
+    target = (form.get("target") or "").strip() or _default_target_for(kind, proj)
     values = {f.name: (form.get(f.name) or "").strip() for f in spec.fields}
 
     try:
-        argv = build_command(kind, target, RAPTOR_HOME, values)
+        argv = build_command(kind, target, RAPTOR_HOME, values, project_name=proj.name)
     except (UnsupportedKind, ValueError) as e:
         return templates.TemplateResponse(
             request, "project_new_run.html",
             _project_ctx(
                 proj, active_stage=kind,
                 spec=spec, form={"target": target, **values},
-                preview_flags=_preview_flags(kind, values, target),
+                preview_flags=_preview_flags(kind, values, target, proj.name),
                 raptor_home=str(RAPTOR_HOME),
                 error=str(e),
             ),
