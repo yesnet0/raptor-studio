@@ -92,3 +92,20 @@ def test_summarize_detects_validation_bundle(tmp_path: Path):
     assert s.has_validation_bundle
     assert s.validation_counts["findings"] == 1
     assert s.validation_counts["attack_tree"] == 1
+
+
+def test_summarize_pairs_dataflow_svg_with_json(tmp_path: Path):
+    (tmp_path / "dataflow_sql_injection.svg").write_text("<svg/>")
+    (tmp_path / "dataflow_sql_injection.json").write_text(json.dumps({"path": []}))
+    (tmp_path / "dataflow_xss.svg").write_text("<svg/>")  # no json pair
+    s = summarize_run(tmp_path)
+    by_name = {d.name: d for d in s.dataflow_diagrams}
+    assert "dataflow_sql_injection" in by_name
+    assert by_name["dataflow_sql_injection"].json_filename == "dataflow_sql_injection.json"
+    assert by_name["dataflow_xss"].json_filename is None
+
+
+def test_summarize_ignores_non_dataflow_svgs(tmp_path: Path):
+    (tmp_path / "logo.svg").write_text("<svg/>")
+    s = summarize_run(tmp_path)
+    assert s.dataflow_diagrams == []

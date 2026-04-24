@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import AsyncIterator, Optional
 
 from fastapi import FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -618,6 +618,35 @@ def run_detail(request: Request, name: str, run_name: str):
             run=run, summary=summary, bundle=bundle, forensics=forensics,
         ),
     )
+
+
+# File types we'll serve from a run directory. Keep tight; add more only
+# when a new surface needs them.
+_ALLOWED_RUN_FILE_SUFFIXES = frozenset({".svg", ".png", ".md", ".json", ".sarif", ".txt"})
+
+
+@app.get("/projects/{name}/runs/{run_name}/files/{filename:path}")
+def run_file(name: str, run_name: str, filename: str):
+    """Safely serve a file from a run directory.
+
+    Resolves the requested path and verifies it stays within the run
+    directory — blocks `..` traversal. Extension whitelist prevents
+    serving arbitrary script / binary content.
+    """
+    proj = _require_project(name)
+    run = _require_run(proj, run_name)
+    try:
+        target = (run.directory / filename).resolve(strict=True)
+    except (FileNotFoundError, OSError):
+        raise HTTPException(404, "file not found")
+    run_root = str(run.directory.resolve()) + "/"
+    if not (str(target) + "/").startswith(run_root) and str(target) != str(run.directory.resolve()):
+        raise HTTPException(403, "path traversal blocked")
+    if not target.is_file():
+        raise HTTPException(404, "not a file")
+    if target.suffix.lower() not in _ALLOWED_RUN_FILE_SUFFIXES:
+        raise HTTPException(403, f"suffix {target.suffix} not allowed")
+    return FileResponse(target)
 
 
 @app.get(

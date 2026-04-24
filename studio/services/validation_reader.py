@@ -88,6 +88,15 @@ def load_validation_bundle(run_dir: Path) -> ValidationBundle:
 
 
 @dataclass
+class DataflowDiagram:
+    """A CodeQL dataflow visualization pair: SVG + (optional) JSON."""
+    name: str          # stem, e.g. "dataflow_sql_injection_user_query"
+    svg_filename: str  # just the basename
+    json_filename: str | None = None
+    size_bytes: int = 0
+
+
+@dataclass
 class RunArtifactSummary:
     """Lightweight summary of a single run directory for the run-overview page."""
     has_sarif: bool = False
@@ -106,6 +115,7 @@ class RunArtifactSummary:
     validation_counts: dict | None = None
     fuzzing_report: dict | None = None
     afl_crashes_count: int = 0
+    dataflow_diagrams: list[DataflowDiagram] = field(default_factory=list)
 
 
 def summarize_run(run_dir: Path) -> RunArtifactSummary:
@@ -178,5 +188,20 @@ def summarize_run(run_dir: Path) -> RunArtifactSummary:
                 1 for f in crashes_dir.iterdir()
                 if f.is_file() and f.name != "README.txt"
             )
+
+        # CodeQL dataflow visualizations: pair dataflow_*.svg with its JSON.
+        svg_files = sorted(run_dir.glob("dataflow_*.svg"))
+        for svg in svg_files:
+            json_pair = run_dir / (svg.stem + ".json")
+            try:
+                size = svg.stat().st_size
+            except OSError:
+                size = 0
+            summary.dataflow_diagrams.append(DataflowDiagram(
+                name=svg.stem,
+                svg_filename=svg.name,
+                json_filename=json_pair.name if json_pair.is_file() else None,
+                size_bytes=size,
+            ))
 
     return summary
