@@ -41,7 +41,8 @@
     </div>
   </label>
 
-  {% for f in spec.fields %}
+  {#- Field macro reused for both Essentials and Advanced. -#}
+  {%- macro render_field(f) -%}
   <label>
     <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 4px;">
       {{ f.label }}{% if f.required %} *{% endif %}
@@ -67,7 +68,36 @@
     {% endif %}
     {% if f.help %}<div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">{{ f.help }}</div>{% endif %}
   </label>
+  {%- endmacro -%}
+
+  {#- Split fields into Essentials (required OR only field) and Advanced (everything else). -#}
+  {%- set essentials = spec.fields | selectattr("required") | list -%}
+  {%- if spec.fields | length == 1 -%}
+    {%- set essentials = spec.fields -%}
+  {%- endif -%}
+  {%- set advanced = spec.fields | rejectattr("required") | list -%}
+  {%- if spec.fields | length == 1 -%}
+    {%- set advanced = [] -%}
+  {%- endif -%}
+
+  {% for f in essentials %}
+    {{ render_field(f) }}
   {% endfor %}
+
+  {% if advanced %}
+  {#- Advanced options: default-collapsed for newcomers, localStorage-sticky for returners. -#}
+  <details class="run-advanced" data-kind="{{ spec.kind }}"
+           style="margin-top: 4px; padding: 10px 14px; border: 1px solid var(--border-l); border-radius: 8px; background: var(--bg);">
+    <summary style="cursor: pointer; font-size: 12px; color: var(--fg2); font-weight: 600;">
+      Advanced options <span style="font-weight: 400; color: var(--fg3);">· {{ advanced|length }}</span>
+    </summary>
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
+    {% for f in advanced %}
+      {{ render_field(f) }}
+    {% endfor %}
+    </div>
+  </details>
+  {% endif %}
 
   <div style="display: flex; gap: 10px; margin-top: 6px;">
     <button type="submit" class="btn btn-p">Start run</button>
@@ -89,5 +119,18 @@
   </div>
 </form>
 </div>
+
+<script>
+(function() {
+  // Sticky Advanced open/closed per kind.
+  const d = document.querySelector('details.run-advanced');
+  if (!d) return;
+  const key = 'rs-advanced-open-' + (d.dataset.kind || 'default');
+  try { if (localStorage.getItem(key) === '1') d.open = true; } catch(e) {}
+  d.addEventListener('toggle', () => {
+    try { localStorage.setItem(key, d.open ? '1' : '0'); } catch(e) {}
+  });
+})();
+</script>
 
 {% endblock %}

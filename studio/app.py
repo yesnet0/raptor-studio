@@ -642,6 +642,11 @@ def personas_page(request: Request):
     )
 
 
+@app.get("/glossary", response_class=HTMLResponse)
+def glossary_page(request: Request):
+    return templates.TemplateResponse(request, "glossary.html", _ctx())
+
+
 @app.post("/settings")
 async def settings_save(request: Request):
     form = await request.form()

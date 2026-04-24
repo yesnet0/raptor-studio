@@ -50,9 +50,21 @@
   </table>
 </div>
 {% else %}
-<div class="card empty">
-  <div class="icon">○</div>
-  <p>No runs have been written to this project's output directory yet.</p>
+{%- set kind = project.kind or 'source' -%}
+{%- if kind == 'binary' -%}
+  {%- set next_stage, next_label = 'fuzz', 'Start a fuzz run' -%}
+{%- elif kind == 'forensics' -%}
+  {%- set next_stage, next_label = 'oss-forensics', 'Start forensic investigation' -%}
+{%- else -%}
+  {%- set next_stage, next_label = 'scan', 'Start your first scan' -%}
+{%- endif -%}
+<div class="card" style="padding: 32px; text-align: center;">
+  <div class="icon" style="font-size: 32px; opacity: 0.5;">○</div>
+  <h2 style="margin: 6px 0 4px; font-size: 16px;">No runs yet</h2>
+  <p style="color: var(--fg2); font-size: 13px; margin: 0 0 16px;">
+    A run is any raptor invocation that writes output to <code class="mono">{{ project.output_dir }}</code>.
+  </p>
+  <a href="/projects/{{ project.name }}/{{ next_stage }}/new" class="btn btn-p">{{ next_label }} →</a>
 </div>
 {% endif %}
 

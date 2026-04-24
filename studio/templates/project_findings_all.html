@@ -65,14 +65,24 @@
   </table>
 </div>
 {% else %}
-<div class="card empty">
-  <div class="icon">∅</div>
-  <p>No findings across any run yet.</p>
-  <p style="font-size: 12px; color: var(--fg3);">
-    Findings are read from <code class="mono">findings.json</code>, <code class="mono">findings_validated.json</code>,
-    <code class="mono">findings_agentic.json</code>, <code class="mono">findings_merged.json</code>
-    inside each run directory.
+{%- set kind = project.kind or 'source' -%}
+{%- if kind == 'binary' -%}
+  {%- set next_stage, next_label = 'fuzz', 'Fuzz this binary' -%}
+{%- elif kind == 'forensics' -%}
+  {%- set next_stage, next_label = 'oss-forensics', 'Start forensic investigation' -%}
+{%- else -%}
+  {%- set next_stage, next_label = 'scan', 'Run your first scan' -%}
+{%- endif -%}
+<div class="card" style="padding: 32px; text-align: center;">
+  <div class="icon" style="font-size: 32px; opacity: 0.5;">∅</div>
+  <h2 style="margin: 6px 0 4px; font-size: 16px;">No findings yet</h2>
+  <p style="color: var(--fg2); font-size: 13px; margin: 0 0 16px;">
+    Findings appear here after any run against this project — <code class="mono">scan</code>, <code class="mono">agentic</code>, <code class="mono">codeql</code>, <code class="mono">validate</code>, or <code class="mono">fuzz</code>.
   </p>
+  <a href="/projects/{{ project.name }}/{{ next_stage }}/new" class="btn btn-p">{{ next_label }} →</a>
+  <div style="font-size: 11px; color: var(--fg3); margin-top: 14px;">
+    Reads from <code class="mono">findings.json</code>, <code class="mono">findings_validated.json</code>, <code class="mono">findings_agentic.json</code>, <code class="mono">findings_merged.json</code>, or SARIF files in each run directory.
+  </div>
 </div>
 {% endif %}
 

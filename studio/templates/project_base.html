@@ -74,7 +74,19 @@
     font-size: 10px; color: var(--fg3);
     text-transform: uppercase; letter-spacing: 0.06em;
     font-weight: 600; padding: 12px 10px 4px;
+    display: block;
   }
+  details.other-lanes summary {
+    list-style: none;
+  }
+  details.other-lanes summary::-webkit-details-marker { display: none; }
+  details.other-lanes summary::before {
+    content: "› ";
+    display: inline-block;
+    transition: transform 0.15s ease;
+    margin-right: 2px;
+  }
+  details.other-lanes[open] summary::before { transform: rotate(90deg); }
 
   .breadcrumbs {
     font-size: 12px; color: var(--fg3);
@@ -122,17 +134,57 @@
       {{ item("/projects/" + project.name + "/runs",     "Runs",     "runs") }}
       {{ item("/projects/" + project.name + "/diff",     "Diff",     "diff") }}
 
-      <div class="section-label">Source analysis</div>
-      {{ item("/projects/" + project.name + "/understand", "Understand", "understand", step=1, lane="source") }}
-      {{ item("/projects/" + project.name + "/scan",       "Scan",       "scan",       step=2, lane="source") }}
-      {{ item("/projects/" + project.name + "/validate",   "Validate",   "validate",   step=3, lane="source") }}
+      {#- Lane sections — prominent ones first, irrelevant ones collapsed.
+          project.kind is 'source' / 'binary' / 'forensics' / None. -#}
+      {%- set kind = project.kind or 'all' -%}
 
-      <div class="section-label">Binary fuzzing</div>
-      {{ item("/projects/" + project.name + "/fuzz",           "Fuzz",           "fuzz",           step=1, lane="binary") }}
-      {{ item("/projects/" + project.name + "/crash-analysis", "Crash analysis", "crash-analysis", step=2, lane="binary") }}
+      {%- macro source_lane() -%}
+        {{ item("/projects/" + project.name + "/understand", "Understand", "understand", step=1, lane="source") }}
+        {{ item("/projects/" + project.name + "/scan",       "Scan",       "scan",       step=2, lane="source") }}
+        {{ item("/projects/" + project.name + "/validate",   "Validate",   "validate",   step=3, lane="source") }}
+      {%- endmacro -%}
 
-      <div class="section-label">Forensics</div>
-      {{ item("/projects/" + project.name + "/oss-forensics", "OSS forensics", "oss-forensics", lane="forensics") }}
+      {%- macro binary_lane() -%}
+        {{ item("/projects/" + project.name + "/fuzz",           "Fuzz",           "fuzz",           step=1, lane="binary") }}
+        {{ item("/projects/" + project.name + "/crash-analysis", "Crash analysis", "crash-analysis", step=2, lane="binary") }}
+      {%- endmacro -%}
+
+      {%- macro forensics_lane() -%}
+        {{ item("/projects/" + project.name + "/oss-forensics", "OSS forensics", "oss-forensics", lane="forensics") }}
+      {%- endmacro -%}
+
+      {% if kind == 'source' %}
+        <div class="section-label">Source analysis</div>
+        {{ source_lane() }}
+        <details class="other-lanes" {% if active_stage in ('fuzz','crash-analysis','oss-forensics') %}open{% endif %}>
+          <summary class="section-label" style="cursor: pointer;">Other capabilities</summary>
+          {{ binary_lane() }}
+          {{ forensics_lane() }}
+        </details>
+      {% elif kind == 'binary' %}
+        <div class="section-label">Binary fuzzing</div>
+        {{ binary_lane() }}
+        <details class="other-lanes" {% if active_stage in ('understand','scan','validate','oss-forensics') %}open{% endif %}>
+          <summary class="section-label" style="cursor: pointer;">Other capabilities</summary>
+          {{ source_lane() }}
+          {{ forensics_lane() }}
+        </details>
+      {% elif kind == 'forensics' %}
+        <div class="section-label">Forensics</div>
+        {{ forensics_lane() }}
+        <details class="other-lanes" {% if active_stage in ('understand','scan','validate','fuzz','crash-analysis') %}open{% endif %}>
+          <summary class="section-label" style="cursor: pointer;">Other capabilities</summary>
+          {{ source_lane() }}
+          {{ binary_lane() }}
+        </details>
+      {% else %}
+        <div class="section-label">Source analysis</div>
+        {{ source_lane() }}
+        <div class="section-label">Binary fuzzing</div>
+        {{ binary_lane() }}
+        <div class="section-label">Forensics</div>
+        {{ forensics_lane() }}
+      {% endif %}
 
       <div class="section-label">Artifacts</div>
       {{ item("/projects/" + project.name + "/exploits", "Exploits", "exploits") }}

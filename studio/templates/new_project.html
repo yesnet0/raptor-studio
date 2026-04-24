@@ -62,35 +62,6 @@
     </div>
   </label>
 
-  <label data-show-for="binary">
-    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Source repo <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
-    <input name="binary" type="text"
-           value="{{ form.binary or '' }}"
-           placeholder="Not typical — use if you also want to scan the source this binary was built from"
-           style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
-    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Rarely needed. Only set if you want this project to also run source scans against a separate directory.</div>
-  </label>
-
-  <label data-show-for="forensics">
-    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Research question / focus <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
-    <input name="focus" type="text"
-           value="{{ form.focus or '' }}"
-           placeholder='e.g. "What happened with the July 13 incident on this repo?"'
-           style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 13px;">
-    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Framing question for the forensic investigation. Passed through to <code class="mono">/oss-forensics</code> when you trigger it.</div>
-  </label>
-
-  <label data-show-for="source">
-    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">CodeQL language <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
-    <select name="language"
-            style="width: 100%; padding: 7px 8px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 13px;">
-      {% for opt in ['', 'python', 'java', 'javascript', 'cpp', 'go', 'ruby', 'csharp', 'swift'] %}
-        <option value="{{ opt }}" {% if form.language == opt %}selected{% endif %}>{{ opt or "(auto-detect)" }}</option>
-      {% endfor %}
-    </select>
-    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Skips CodeQL's language auto-detection when set. Only matters for CodeQL runs.</div>
-  </label>
-
   <label>
     <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Description <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
     <input name="description" type="text"
@@ -99,24 +70,62 @@
            style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 14px;">
   </label>
 
-  <label>
-    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Notes <span style="color: var(--fg3); font-weight: 400;">(optional, multiline)</span></div>
-    <textarea name="notes" rows="3"
-              placeholder="Longer context, scope, caveats, links…"
-              style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 13px; resize: vertical;">{{ form.notes or '' }}</textarea>
-    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Stored in raptor's <code class="mono">project.json</code> <code class="mono">notes</code> field. Editable later via <code class="mono">raptor project notes</code>.</div>
-  </label>
+  <details class="advanced" {% if form.notes or form.output_dir or form.language or form.binary or form.focus %}open{% endif %}
+           style="margin-top: 4px; padding: 10px 14px; border: 1px solid var(--border-l); border-radius: 8px; background: var(--bg);">
+    <summary style="cursor: pointer; font-size: 12px; color: var(--fg2); font-weight: 600; letter-spacing: 0.02em;">Advanced options</summary>
 
-  <label>
-    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Output directory <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
-    <input name="output_dir" type="text"
-           value="{{ form.output_dir or '' }}"
-           placeholder="{{ default_output }}"
-           style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
-    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Where raptor writes run outputs. Defaults to shown path (created if missing).</div>
-  </label>
+    <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
 
-  <div style="display: flex; gap: 10px; margin-top: 8px;">
+      <label data-show-for="binary">
+        <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Source repo <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+        <input name="binary" type="text"
+               value="{{ form.binary or '' }}"
+               placeholder="Not typical — use if you also want to scan the source this binary was built from"
+               style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+        <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Rarely needed. Only set if you want this project to also run source scans against a separate directory.</div>
+      </label>
+
+      <label data-show-for="forensics">
+        <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Research question / focus <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+        <input name="focus" type="text"
+               value="{{ form.focus or '' }}"
+               placeholder='e.g. "What happened with the July 13 incident on this repo?"'
+               style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 13px;">
+        <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Framing question for the forensic investigation. Passed through to <code class="mono">/oss-forensics</code> when you trigger it.</div>
+      </label>
+
+      <label data-show-for="source">
+        <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">CodeQL language <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+        <select name="language"
+                style="width: 100%; padding: 7px 8px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 13px;">
+          {% for opt in ['', 'python', 'java', 'javascript', 'cpp', 'go', 'ruby', 'csharp', 'swift'] %}
+            <option value="{{ opt }}" {% if form.language == opt %}selected{% endif %}>{{ opt or "(auto-detect)" }}</option>
+          {% endfor %}
+        </select>
+        <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Skips CodeQL's language auto-detection. Only affects CodeQL runs.</div>
+      </label>
+
+      <label>
+        <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Notes <span style="color: var(--fg3); font-weight: 400;">(optional, multiline)</span></div>
+        <textarea name="notes" rows="3"
+                  placeholder="Longer context, scope, caveats, links…"
+                  style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 13px; resize: vertical;">{{ form.notes or '' }}</textarea>
+        <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Stored in raptor's <code class="mono">project.json</code> <code class="mono">notes</code> field.</div>
+      </label>
+
+      <label>
+        <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Output directory <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+        <input name="output_dir" type="text"
+               value="{{ form.output_dir or '' }}"
+               placeholder="{{ default_output }}"
+               style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+        <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Where raptor writes run outputs. Defaults to shown path (created if missing).</div>
+      </label>
+
+    </div>
+  </details>
+
+  <div style="display: flex; gap: 10px; margin-top: 10px;">
     <button type="submit" class="btn btn-p">Create project</button>
     <a href="/projects" class="btn">Cancel</a>
   </div>
@@ -156,6 +165,32 @@
   // Initial state — respect the form value or default to 'source'
   const initial = document.querySelector('input[name="project_type"]:checked')?.value || 'source';
   setType(initial);
+
+  // Smart-default: set name from target basename when name is empty.
+  // Heuristic: take the last non-empty path segment (or host from a URL).
+  const nameInput = document.querySelector('input[name="name"]');
+  const targetInput2 = document.querySelector('input[name="target"]');
+  let userEditedName = false;
+  if (nameInput && targetInput2) {
+    nameInput.addEventListener('input', () => { userEditedName = nameInput.value.length > 0; });
+    targetInput2.addEventListener('input', () => {
+      if (userEditedName) return;
+      const t = targetInput2.value.trim();
+      if (!t) return;
+      let candidate = '';
+      if (t.startsWith('http://') || t.startsWith('https://') || t.startsWith('git@') || t.startsWith('ssh://')) {
+        // URL — take the last path segment minus trailing .git
+        const clean = t.replace(/\.git$/, '').replace(/[:]/g, '/');
+        candidate = clean.split('/').filter(Boolean).pop() || '';
+      } else {
+        // Local path — basename
+        candidate = t.replace(/\/+$/, '').split('/').filter(Boolean).pop() || '';
+      }
+      // Sanitize to raptor's name regex: letters/numbers/-/./_, first char alnum.
+      candidate = candidate.replace(/[^a-zA-Z0-9._-]/g, '-').replace(/^[._-]+/, '');
+      if (candidate) nameInput.value = candidate;
+    });
+  }
 })();
 </script>
 

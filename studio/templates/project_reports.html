@@ -25,13 +25,17 @@
   </table>
 </div>
 {% else %}
-<div class="card empty">
-  <div class="icon">∅</div>
-  <p>No reports yet.</p>
-  <p style="font-size: 12px; color: var(--fg3);">
-    Run <code class="mono">raptor project report</code> from the CLI to generate a merged project report,
-    or look for <code class="mono">validation-report.md</code> inside validate runs.
+<div class="card" style="padding: 32px; text-align: center;">
+  <div class="icon" style="font-size: 32px; opacity: 0.5;">∅</div>
+  <h2 style="margin: 6px 0 4px; font-size: 16px;">No reports yet</h2>
+  <p style="color: var(--fg2); font-size: 13px; margin: 0 0 16px;">
+    Reports are markdown summaries emitted at the end of runs (e.g. <code class="mono">validation-report.md</code>,
+    <code class="mono">forensic-report.md</code>) or produced by <code class="mono">raptor project report</code> from the CLI.
   </p>
+  <a href="/projects/{{ project.name }}/validate/new" class="btn btn-p">Run validation →</a>
+  <div style="font-size: 11px; color: var(--fg3); margin-top: 14px;">
+    Picks up every <code class="mono">*.md</code> file in each run directory.
+  </div>
 </div>
 {% endif %}
 
