@@ -1,7 +1,7 @@
 # raptor-studio — Product Requirements
 
 Status: **v0.0.1 — functionally complete, pre-absorption.**
-Last updated: 2026-04-23.
+Last updated: 2026-04-23 (commit `1a1b686`).
 
 ---
 
@@ -30,7 +30,14 @@ The design thesis that mediates between them:
 
 - **Non-fork**: `raptor-studio` is a separate repository. Raptor is cloned into `$RAPTOR_HOME` (default `~/Projects/raptor/`) and read as a dependency.
 - **Pristine schema**: Projects created from the UI land in `$RAPTOR_PROJECTS_DIR/<name>.json` using raptor's exact 7-field schema (`version, name, target, output_dir, description, notes, created`). A project created here is indistinguishable from one created by `raptor project create` — round-trip clean.
-- **Sidecar for studio-only fields**: Studio-specific metadata (project type, optional binary, optional focus, optional CodeQL language) lives in `$STUDIO_DATA_DIR/project-extras/<name>.json`. Raptor's CLI ignores it. Raptor-created projects without a sidecar still work — type is inferred from their runs.
+- **Sidecar for studio-only fields**: Studio-specific metadata lives in `$STUDIO_DATA_DIR/project-extras/<name>.json`. Current fields:
+  - `type` — `source` / `binary` / `forensics`
+  - `source_repo` — secondary source tree (binary projects that also want to run source analysis)
+  - `focus` — research question for forensics
+  - `vendor_report_url` — vendor incident report to validate against (forensics)
+  - `language` — CodeQL language hint (source)
+  - `corpus_dir` — AFL++ seed corpus directory (binary; pre-fills the fuzz trigger form)
+  Raptor's CLI ignores the sidecar. Raptor-created projects without one still work — type is inferred from their runs.
 - **Upstream target**: The package layout mirrors where it would live inside raptor (`packages/studio/`). Path-moving is the only friction between this repo and an upstream PR.
 
 ## 4. Capabilities
@@ -109,6 +116,8 @@ A full list lives in `docs/CHANGELOG.md`. High-level:
 | Demo seed script | `b7aa80c` | One-shot `scripts/seed_demo.py` |
 | Project types + Claude-backed triggers | `6a86777` | Type picker; `/understand`, `/validate`, `/oss-forensics`, `/crash-analysis` runnable via `claude -p` wrapper |
 | Newcomer UX pass | `ace3ef8` | Welcome zero-state, progressive disclosure, adaptive sidebar, contextual CTAs, glossary + abbr tooltips |
+| Docs: PRD + CHANGELOG | `0f10c50` | Canonical product doc, commit log, refreshed README and UX narrative |
+| Option-matrix alignment | `1a1b686` | `corpus_dir`, `vendor_report_url`; rename `binary` → `source_repo`; trigger forms pre-fill from project-level defaults |
 
 ## 8. Open work
 

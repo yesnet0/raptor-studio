@@ -4,6 +4,21 @@ Reverse-chronological. Each entry is one commit on `main`. Test counts are cumul
 
 ## 2026-04-23
 
+### 1a1b686 — Align /projects/new with the full option matrix
+
+- Rename `ProjectExtras.binary` → `ProjectExtras.source_repo` (the label was already "Source repo" but the field name was the confusing `binary`). Reader still accepts legacy `binary` key; writer accepts `binary=` kwarg as deprecated alias.
+- Add `corpus_dir` field for binary projects — project-level default for the fuzz trigger form.
+- Add `vendor_report_url` field for forensics projects — automatically appended to the `/oss-forensics` slash-command prompt as "validate claims in <url>".
+- `app.py` adds `_default_run_values()` helper; the fuzz trigger form's `corpus` input and the oss-forensics slash-command both pick up project-level defaults.
+- Tests: 144 → 148.
+
+### 0f10c50 — Docs refresh
+
+- New `docs/PRD.md` canonical product doc (10 sections).
+- New `docs/CHANGELOG.md` (this file).
+- Updated `README.md` with accurate status, structure, and roadmap.
+- Updated `docs/UX_RECONCILIATION.md` with "Shipped in…" sections for the last two passes.
+
 ### ace3ef8 — Newcomer UX pass
 
 Design thesis: easy for newcomers, not dumbed down, options surfaced without overwhelm. Six moves:
