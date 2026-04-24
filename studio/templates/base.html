@@ -209,6 +209,52 @@ footer.foot {
   padding: 24px; text-align: center;
   color: var(--fg3); font-size: 12px;
 }
+
+/* Rendered markdown blocks (reports, hypotheses, verification).
+   Kept deliberately restrained so they don't overshadow the UI chrome. */
+.markdown-body {
+  font-size: 13px; line-height: 1.55; color: var(--fg);
+}
+.markdown-body > *:first-child { margin-top: 0; }
+.markdown-body > *:last-child { margin-bottom: 0; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+  margin: 14px 0 6px; font-weight: 700; letter-spacing: -0.01em;
+}
+.markdown-body h1 { font-size: 18px; }
+.markdown-body h2 { font-size: 15px; }
+.markdown-body h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg2); }
+.markdown-body h4, .markdown-body h5, .markdown-body h6 { font-size: 12px; color: var(--fg2); margin: 10px 0 4px; }
+.markdown-body p { margin: 6px 0; }
+.markdown-body ul, .markdown-body ol { margin: 6px 0; padding-left: 22px; }
+.markdown-body li { margin: 2px 0; }
+.markdown-body code {
+  font-family: "JetBrains Mono", monospace; font-size: 11px;
+  background: var(--bg3); color: var(--fg); padding: 1px 5px; border-radius: 3px;
+}
+.markdown-body pre {
+  background: var(--bg3); border: 1px solid var(--border-l);
+  padding: 10px 12px; border-radius: 6px; margin: 8px 0;
+  max-height: 360px; overflow: auto;
+}
+.markdown-body pre code { background: transparent; padding: 0; font-size: 11px; }
+.markdown-body blockquote {
+  border-left: 3px solid var(--border); padding: 2px 0 2px 12px;
+  margin: 8px 0; color: var(--fg2);
+}
+.markdown-body table {
+  border-collapse: collapse; width: auto; margin: 10px 0;
+  font-size: 12px;
+}
+.markdown-body th, .markdown-body td {
+  padding: 6px 10px; border-bottom: 1px solid var(--border-l);
+  text-align: left;
+}
+.markdown-body th {
+  background: var(--bg3); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em; font-size: 11px;
+}
+.markdown-body a { color: var(--accent); }
+.markdown-body hr { border: 0; border-top: 1px solid var(--border-l); margin: 14px 0; }
 </style>
 </head>
 <body>

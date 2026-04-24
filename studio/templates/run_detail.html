@@ -167,9 +167,13 @@ flowchart LR
 {% endif %}
 
 {% if bundle and bundle.report_md %}
-<div class="card" style="margin-bottom: 16px;">
-  <h2 style="margin: 0 0 10px; font-size: 14px;">validation-report.md</h2>
-  <pre style="font-size: 12px; max-height: 400px; overflow: auto; margin: 0;">{{ bundle.report_md }}</pre>
+<div class="card md-report" style="margin-bottom: 16px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h2 style="margin: 0; font-size: 14px;">validation-report.md</h2>
+    <a href="/projects/{{ project.name }}/runs/{{ run.name }}/files/validation-report.md"
+       target="_blank" style="font-size: 11px; color: var(--fg3);">view raw →</a>
+  </div>
+  <div class="markdown-body" style="max-height: 420px; overflow: auto;">{{ bundle.report_md | md | safe }}</div>
 </div>
 {% endif %}
 
@@ -214,7 +218,7 @@ flowchart LR
           {% elif h.status == "rejected" %}<span class="badge b-failed">rejected</span>
           {% else %}<span class="badge b-neutral">{{ h.status }}</span>{% endif %}
         </summary>
-        <pre style="margin: 10px 0 0; font-size: 11px; max-height: 320px; overflow: auto; background: var(--bg3);">{{ h.content }}</pre>
+        <div class="markdown-body" style="margin-top: 10px; max-height: 360px; overflow: auto;">{{ h.content | md | safe }}</div>
       </details>
     {% endfor %}
     </div>
@@ -226,15 +230,19 @@ flowchart LR
     <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">Evidence verification</div>
     <details>
       <summary style="cursor: pointer; font-size: 12px;">Show verification report</summary>
-      <pre style="margin-top: 8px; font-size: 11px; max-height: 300px; overflow: auto;">{{ forensics.evidence_verification }}</pre>
+      <div class="markdown-body" style="margin-top: 8px; max-height: 340px; overflow: auto;">{{ forensics.evidence_verification | md | safe }}</div>
     </details>
   </div>
   {% endif %}
 
   {% if forensics.forensic_report %}
   <div style="padding: 14px; background: var(--bg3); border-radius: 6px; border: 1px solid var(--border);">
-    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">Final forensic report</div>
-    <pre style="font-size: 12px; max-height: 520px; overflow: auto; margin: 0; background: transparent;">{{ forensics.forensic_report }}</pre>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+      <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Final forensic report</div>
+      <a href="/projects/{{ project.name }}/runs/{{ run.name }}/files/forensic-report.md"
+         target="_blank" style="font-size: 11px; color: var(--fg3);">view raw →</a>
+    </div>
+    <div class="markdown-body" style="max-height: 560px; overflow: auto;">{{ forensics.forensic_report | md | safe }}</div>
   </div>
   {% endif %}
 </div>

@@ -42,6 +42,7 @@ from studio.services.run_spec import (
 )
 from studio.services.diff_reader import compute_diff
 from studio.services.forensics_reader import is_forensics_run_dir, load_forensics_bundle
+from studio.services.markdown_render import render as render_markdown
 from studio.services.personas import all_personas, personas_for_finding
 from studio.services.project_extras import (
     PROJECT_TYPE_DESCRIPTIONS,
@@ -77,6 +78,8 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 # Expose personas_for_finding globally to templates so _finding_detail.html
 # can render persona cards inline without every route having to pass it.
 templates.env.globals["personas_for"] = personas_for_finding
+# Markdown filter: `{{ some_md_text | md | safe }}` — for raptor reports.
+templates.env.filters["md"] = render_markdown
 
 app = FastAPI(title=APP_TITLE)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
