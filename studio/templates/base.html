@@ -89,16 +89,27 @@ nav.top .links a {
 nav.top .links a:hover { color: var(--fg); text-decoration: none; }
 nav.top .links a.active { color: var(--fg); }
 nav.top .spacer { flex: 1; }
-nav.top .theme-toggle {
-  background: transparent; border: 1px solid var(--border);
-  color: var(--fg2); padding: 6px 10px; border-radius: 6px;
-  font-family: inherit; font-size: 13px; cursor: pointer;
-}
-nav.top .theme-toggle:hover { color: var(--fg); border-color: var(--fg3); }
+/* Top-right version pill + theme toggle — matched to vulngraph's design. */
 nav.top .version {
-  font-family: "JetBrains Mono", monospace; font-size: 11px;
-  color: var(--fg3); padding: 2px 8px; border: 1px solid var(--border);
-  border-radius: 10px;
+  font-size: 11px; color: var(--fg3); font-weight: 500;
+  padding: 0 10px; display: flex; align-items: center; gap: 6px;
+}
+nav.top .version .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #16a34a;   /* green — worker alive */
+  display: inline-block;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+nav.top .theme-toggle {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--fg2); cursor: pointer; font-size: 15px;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease;
+  padding: 0; font-family: inherit;
+}
+nav.top .theme-toggle:hover {
+  color: var(--accent); border-color: var(--accent);
 }
 
 /* Layout */
@@ -270,8 +281,8 @@ footer.foot {
     <a href="/settings"{% if request.url.path.startswith("/settings") %} class="active"{% endif %}>Settings</a>
   </div>
   <div class="spacer"></div>
-  <span class="version">v0.0.1</span>
-  <button class="theme-toggle" onclick="toggleTheme()">dark / light</button>
+  <span class="version"><span class="dot"></span>v0.0.1</span>
+  <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark / light mode">◐</button>
 </nav>
 
 <main class="container">
@@ -287,15 +298,22 @@ footer.foot {
 <script>
 function toggleTheme() {
   const root = document.documentElement;
-  const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  const cur = root.getAttribute("data-theme") || "dark";
+  const next = cur === "dark" ? "light" : "dark";
   root.setAttribute("data-theme", next);
   try { localStorage.setItem("raptor-studio-theme", next); } catch(e) {}
+  const btn = document.getElementById("theme-btn");
+  if (btn) btn.textContent = next === "dark" ? "☾" : "◐";
 }
 (function() {
   try {
     const saved = localStorage.getItem("raptor-studio-theme");
     if (saved) document.documentElement.setAttribute("data-theme", saved);
   } catch(e) {}
+  // Sync the toggle icon to the current theme on load.
+  const cur = document.documentElement.getAttribute("data-theme") || "dark";
+  const btn = document.getElementById("theme-btn");
+  if (btn) btn.textContent = cur === "dark" ? "☾" : "◐";
 })();
 function toggleRow(id) {
   const el = document.getElementById(id);
