@@ -4,7 +4,20 @@ Reverse-chronological. Each entry is one commit on `main`. Test counts are cumul
 
 ## 2026-04-23
 
-### (latest) — Render raptor markdown reports as HTML
+### cd58dc9 — Top-right version + theme toggle: match vulngraph's design
+
+- Replaced prior pixel-art interpretation with vulngraph's exact CSS + markup (fetched from `bertha.tailc60d40.ts.net:8888/settings`).
+- Version: green 7×7 dot with soft green glow ring, then plain `v0.0.1` text — no border, no pill.
+- Theme toggle: 36×36 bg3 square with 8px radius border; single unicode glyph `☾` in dark mode, `◐` in light. Hover turns accent.
+- `toggleTheme()` JS rewrites the glyph on flip and on page load to keep it in sync.
+
+### e8d9348 — Avatar: transparent background, pure-black pixels
+
+- Previous PNG had a solid white background; `filter: invert(1)` in dark mode turned that into a visible black square behind the raptor.
+- New `scripts/process_avatar.py` reads the source PNG and writes `studio/static/velociraptor.png` with near-white pixels → transparent (alpha=0) and everything else → pure black, opaque.
+- Existing dark-mode CSS rule now flips pure black → white while transparent stays transparent; raptor floats cleanly on either theme.
+
+### a84bf3f — Render raptor markdown reports as HTML
 
 - `services/markdown_render.py` wraps Python `markdown` with `extra`, `sane_lists`, `admonition` extensions. Converter cached via `lru_cache` + `.reset()` between calls.
 - New `.markdown-body` CSS block in `base.html` with restrained, design-system-matched heading sizes / code fence / table / link styling.

@@ -1,7 +1,7 @@
 # raptor-studio — Product Requirements
 
 Status: **v0.0.1 — functionally complete, pre-absorption.**
-Last updated: 2026-04-23 (commit `1a1b686`).
+Last updated: 2026-04-23 (commit `cd58dc9`).
 
 ---
 
@@ -119,7 +119,9 @@ A full list lives in `docs/CHANGELOG.md`. High-level:
 | Docs: PRD + CHANGELOG | `0f10c50` | Canonical product doc, commit log, refreshed README and UX narrative |
 | Option-matrix alignment | `1a1b686` | `corpus_dir`, `vendor_report_url`; rename `binary` → `source_repo`; trigger forms pre-fill from project-level defaults |
 | Dataflow SVGs | `92b1187` | Embed CodeQL `dataflow_*.svg` inline on run detail; safe file-serving route with path-traversal + extension-whitelist protection |
-| Markdown rendering | (latest) | `*.md` reports render as HTML with fenced code / tables / headings instead of raw `<pre>`; "view raw" escape hatch per block |
+| Markdown rendering | `a84bf3f` | `*.md` reports render as HTML with fenced code / tables / headings instead of raw `<pre>`; "view raw" escape hatch per block |
+| Avatar cleanup | `e8d9348` | Transparent-bg + pure-black PNG so `filter: invert(1)` in dark mode produces a clean white raptor with no backing rectangle in either theme |
+| Top-right match to vulngraph | (latest) | Version pill + theme toggle adopt vulngraph's exact styling (green status dot, 36×36 single-glyph toggle) |
 
 ## 8. Open work
 
@@ -138,7 +140,8 @@ Ordered by expected value.
 - **Do not extend raptor's `project.json` schema** — use the studio sidecar at `$STUDIO_DATA_DIR/project-extras/` instead.
 - **Every UI-triggered subprocess must surface its Equivalent CLI** — so power users can always reproduce the action outside the UI.
 - **Zero service-layer churn on pure UX changes** — polish passes edit templates and routes only; `services/` stays frozen unless a new capability demands it.
-- **The velociraptor mark** — kept minimal, pixel-art, coral-adjacent. Do not dress it up.
+- **The velociraptor mark** — kept minimal, pixel-art, transparent-bg. PNG stores pure black; dark mode relies on CSS `filter: invert(1)` rather than shipping two files. Regenerate via `scripts/process_avatar.py` if the source changes.
+- **Top-right chrome (version pill + theme toggle)** — visually mirrors vulngraph for consistency across the two sibling tools. If vulngraph's design changes, re-scrape from the live instance and update.
 
 ## 10. Glossary pointer
 
