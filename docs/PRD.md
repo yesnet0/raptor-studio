@@ -118,12 +118,13 @@ A full list lives in `docs/CHANGELOG.md`. High-level:
 | Newcomer UX pass | `ace3ef8` | Welcome zero-state, progressive disclosure, adaptive sidebar, contextual CTAs, glossary + abbr tooltips |
 | Docs: PRD + CHANGELOG | `0f10c50` | Canonical product doc, commit log, refreshed README and UX narrative |
 | Option-matrix alignment | `1a1b686` | `corpus_dir`, `vendor_report_url`; rename `binary` → `source_repo`; trigger forms pre-fill from project-level defaults |
+| Dataflow SVGs | (latest) | Embed CodeQL `dataflow_*.svg` inline on run detail; safe file-serving route with path-traversal + extension-whitelist protection |
 
 ## 8. Open work
 
 Ordered by expected value.
 
-1. **Dataflow SVG rendering** — raptor already writes `dataflow_*.svg`; embedding them on finding detail (for CodeQL runs) is a high-ceiling, low-cost add.
+1. ~~**Dataflow SVG rendering**~~ ✅ shipped — CodeQL run dirs' `dataflow_*.svg` now render inline on run detail with paired-JSON links.
 2. **Markdown rendering** for `*.md` reports (validation-report, forensic-report, root-cause hypotheses) — currently raw `<pre>`.
 3. **Coverage view** — `gcov`/`checked_by` merge per project, with "which files did raptor actually read?" heatmap.
 4. **Job history KPIs** on Dashboard — e.g. tokens used today, $ spent this week, most-common failure kind.

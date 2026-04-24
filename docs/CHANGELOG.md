@@ -4,6 +4,13 @@ Reverse-chronological. Each entry is one commit on `main`. Test counts are cumul
 
 ## 2026-04-23
 
+### (next) — Embed CodeQL dataflow SVGs inline on run detail
+
+- `services/validation_reader` detects `dataflow_*.svg` + paired `.json` in CodeQL run dirs.
+- New safe file-serving route `GET /projects/{name}/runs/{run_name}/files/{filename:path}` with path-traversal check and extension whitelist (svg / png / md / json / sarif / txt).
+- `run_detail.html` gains a "Dataflow diagrams" card with responsive thumbnail grid. Click opens full-size; paired JSON linked when present.
+- Tests: 148 → 150.
+
 ### 1a1b686 — Align /projects/new with the full option matrix
 
 - Rename `ProjectExtras.binary` → `ProjectExtras.source_repo` (the label was already "Source repo" but the field name was the confusing `binary`). Reader still accepts legacy `binary` key; writer accepts `binary=` kwarg as deprecated alias.
