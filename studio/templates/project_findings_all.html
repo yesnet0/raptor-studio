@@ -1,29 +1,16 @@
 {% extends "project_base.html" %}
-{% block title %}Findings — {{ project.name }}/{{ run.name }} — {{ app_title }}{% endblock %}
 {% block breadcrumb_tail %}
   <span class="sep">›</span>
-  <a href="/projects/{{ project.name }}/runs">Runs</a>
-  <span class="sep">›</span>
-  <span class="current mono" style="font-size: 11px;">{{ run.name }}</span>
+  <span class="current">Findings</span>
 {% endblock %}
 {% block project_content %}
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
   <div>
     <h1 style="margin: 0; font-size: 22px;">Findings</h1>
-    <div style="color: var(--fg2); font-size: 13px; margin-top: 4px;">
-      <span class="mono">{{ run.name }}</span>
-      · <span class="badge b-neutral">{{ run.kind }}</span>
-      {% if run.status == "completed" %}<span class="badge b-ok">complete</span>
-      {% elif run.status == "running" %}<span class="badge b-running">running</span>
-      {% elif run.status == "failed" %}<span class="badge b-failed">failed</span>
-      {% else %}<span class="badge b-neutral">{{ run.status }}</span>{% endif %}
-    </div>
-    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg3); margin-top: 4px;">
-      {{ run.command }}
-    </div>
+    <div style="color: var(--fg2); font-size: 13px; margin-top: 4px;">All findings merged across every run in this project.</div>
   </div>
-  <span class="badge b-neutral">{{ findings|length }} finding{{ 's' if findings|length != 1 else '' }}</span>
+  <span class="badge b-neutral">{{ findings|length }} total</span>
 </div>
 
 {% if findings %}
@@ -36,11 +23,14 @@
         <th>Type</th>
         <th>CWE</th>
         <th>Location</th>
+        <th>Run</th>
         <th style="width: 40px;"></th>
       </tr>
     </thead>
     <tbody>
-    {% for f in findings %}
+    {% for item in findings %}
+      {% set f = item.finding %}
+      {% set r = item.run %}
       {% set fs = f.final_status or f.status or "pending" %}
       {% set verdict = (f.feasibility or {}).get("verdict") or f.verdict or "unknown" %}
       {% set impact = f.impact or "unknown" %}
@@ -62,10 +52,11 @@
         <td class="mono" style="font-size: 12px;">{{ f.vuln_type or f.type or "—" }}</td>
         <td class="mono" style="font-size: 11px; color: var(--fg3);">{{ f.cwe_id or f.cwe or "" }}</td>
         <td class="mono" style="font-size: 11px;">{{ f.file or "" }}{% if f.line %}:{{ f.line }}{% endif %}</td>
+        <td class="mono" style="font-size: 11px; color: var(--fg3);">{{ r.name|truncate(22, True, "…") }}</td>
         <td style="color: var(--fg3);">▶</td>
       </tr>
       <tr class="detail" id="f{{ loop.index }}">
-        <td colspan="6">
+        <td colspan="7">
           {% include "_finding_detail.html" %}
         </td>
       </tr>
@@ -76,11 +67,11 @@
 {% else %}
 <div class="card empty">
   <div class="icon">∅</div>
-  <p>No findings parsed from this run.</p>
+  <p>No findings across any run yet.</p>
   <p style="font-size: 12px; color: var(--fg3);">
-    Raptor stores findings in <code class="mono">findings.json</code>, <code class="mono">findings_validated.json</code>,
-    <code class="mono">findings_agentic.json</code>, or <code class="mono">findings_merged.json</code>. SARIF is also emitted but not yet
-    rendered here.
+    Findings are read from <code class="mono">findings.json</code>, <code class="mono">findings_validated.json</code>,
+    <code class="mono">findings_agentic.json</code>, <code class="mono">findings_merged.json</code>
+    inside each run directory.
   </p>
 </div>
 {% endif %}

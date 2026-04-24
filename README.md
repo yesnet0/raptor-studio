@@ -36,6 +36,7 @@ Projects created from the UI land in `~/.raptor/projects/<name>.json` — the sa
 | `RAPTOR_HOME` | `~/Projects/raptor` | Location of raptor source checkout |
 | `RAPTOR_OUTPUT_BASE` | `$RAPTOR_HOME/out/projects` | Default base path for new projects' output dirs |
 | `STUDIO_DATA_DIR` | `~/.raptor-studio` | Reserved: studio's own cache / provenance sidecars |
+| `RAPTOR_MODELS_CONFIG` | `~/.config/raptor/models.json` | Raptor's per-role LLM config (read + written by Settings page) |
 
 ## Structure
 
@@ -58,18 +59,31 @@ The package layout mirrors what it would look like as `packages/studio/` inside 
 
 ## Roadmap
 
-Phase 1 (read-only):
+Phase 1 (raptor-literate read-only):
 - [x] Projects list
-- [x] Per-project run browser
-- [x] Findings viewer
-- [ ] Mermaid dataflow rendering
-- [ ] Exploit PoC browser
+- [x] Per-project sidebar with three pipeline lanes (source / binary / forensics)
+- [x] Project overview with lane-status cards and next-action CTA
+- [x] Findings viewer with raptor's full schema (`final_status`, verdict × impact, feasibility, chain_breaks, what_would_help, exploitation_paths, validation trail)
+- [x] Runs list, per-stage pages (Understand / Scan / Validate / Fuzz / Crash analysis / OSS forensics)
+- [x] Exploits, Patches, Reports browsers
+- [x] Activity (JSONL audit log tail)
+- [x] Global Settings: raptor's `~/.config/raptor/models.json` with per-role models (analysis / code / consensus / fallback), env-var status, budget cap display
+- [ ] Mermaid dataflow rendering from `attack-surface.json` / `dataflow_*.json`
 
 Phase 2 (interactive):
-- [x] Create new project (writes raptor-compatible JSON)
-- [ ] Scan trigger from UI
-- [ ] Live run monitoring
+- [x] Create new project (writes raptor-compatible JSON to `~/.raptor/projects/`)
+- [x] Save model configuration
+- [ ] Scan / validate / fuzz trigger from UI (subprocess + job queue)
+- [ ] Live run monitoring (SSE over JSONL log tail)
 - [ ] Run diff (resolved / carried / new findings)
+- [ ] OSS forensics walkthrough
+- [ ] Per-persona panels on finding pages
+
+Phase 3 (upstream):
+- [ ] Issue on gadievron/raptor proposing absorption as `packages/studio/`
+- [ ] PR
+
+See [docs/UX_RECONCILIATION.md](docs/UX_RECONCILIATION.md) for the design rationale.
 
 Phase 3 (upstream):
 - [ ] Issue on gadievron/raptor proposing absorption

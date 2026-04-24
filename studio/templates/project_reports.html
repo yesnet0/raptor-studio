@@ -1,0 +1,38 @@
+{% extends "project_base.html" %}
+{% block breadcrumb_tail %}
+  <span class="sep">›</span>
+  <span class="current">Reports</span>
+{% endblock %}
+{% block project_content %}
+
+<h1 style="margin: 0; font-size: 22px;">Reports</h1>
+<div style="color: var(--fg2); font-size: 13px; margin-top: 4px; margin-bottom: 16px;">Merged project reports and per-run markdown summaries.</div>
+
+{% if reports %}
+<div class="card" style="padding: 0;">
+  <table>
+    <thead><tr><th>Report</th><th>Run</th><th>Size</th><th>Modified</th></tr></thead>
+    <tbody>
+    {% for r in reports %}
+      <tr>
+        <td class="mono" style="font-size: 12px;">{{ r.filename }}</td>
+        <td class="mono" style="font-size: 11px; color: var(--fg3);">{{ r.run_name|truncate(26, True, "…") }}</td>
+        <td class="mono" style="font-size: 11px; color: var(--fg3);">{{ r.size_bytes }}b</td>
+        <td class="mono" style="font-size: 11px; color: var(--fg3);">{{ r.modified }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card empty">
+  <div class="icon">∅</div>
+  <p>No reports yet.</p>
+  <p style="font-size: 12px; color: var(--fg3);">
+    Run <code class="mono">raptor project report</code> from the CLI to generate a merged project report,
+    or look for <code class="mono">validation-report.md</code> inside validate runs.
+  </p>
+</div>
+{% endif %}
+
+{% endblock %}

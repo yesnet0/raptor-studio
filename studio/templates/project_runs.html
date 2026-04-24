@@ -1,0 +1,59 @@
+{% extends "project_base.html" %}
+{% block breadcrumb_tail %}
+  <span class="sep">›</span>
+  <span class="current">Runs</span>
+{% endblock %}
+{% block project_content %}
+
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+  <div>
+    <h1 style="margin: 0; font-size: 22px;">Runs</h1>
+    <div style="color: var(--fg2); font-size: 13px; margin-top: 4px;">Every run directory under <code class="mono">{{ project.output_dir }}</code></div>
+  </div>
+  <span class="badge b-neutral">{{ runs|length }} total</span>
+</div>
+
+{% if runs %}
+<div class="card" style="padding: 0;">
+  <table>
+    <thead>
+      <tr>
+        <th>Run</th>
+        <th>Kind</th>
+        <th>Lane</th>
+        <th>Command</th>
+        <th>Timestamp</th>
+        <th>Status</th>
+        <th>Findings</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in runs %}
+      <tr>
+        <td class="mono" style="font-size: 12px;">
+          <a href="/projects/{{ project.name }}/runs/{{ r.name }}/findings">{{ r.name }}</a>
+        </td>
+        <td><span class="badge b-neutral">{{ r.kind }}</span></td>
+        <td style="font-size: 11px; color: var(--fg3);">{{ run_lane(r) }}</td>
+        <td class="mono" style="font-size: 11px; color: var(--fg2); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ r.command }}">{{ r.command }}</td>
+        <td class="mono" style="font-size: 12px; color: var(--fg3);">{{ r.timestamp }}</td>
+        <td>
+          {% if r.status == "completed" %}<span class="badge b-ok">complete</span>
+          {% elif r.status == "running" %}<span class="badge b-running">running</span>
+          {% elif r.status == "failed" %}<span class="badge b-failed">failed</span>
+          {% else %}<span class="badge b-neutral">{{ r.status }}</span>{% endif %}
+        </td>
+        <td>{{ r.findings()|length }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card empty">
+  <div class="icon">○</div>
+  <p>No runs have been written to this project's output directory yet.</p>
+</div>
+{% endif %}
+
+{% endblock %}

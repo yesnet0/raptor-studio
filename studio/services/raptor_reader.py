@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Optional
 
 from studio.config import RAPTOR_PROJECTS_DIR
+from studio.services.run_kind import classify as classify_kind
 
 FINDINGS_FILENAMES = (
     "findings.json",
@@ -59,12 +60,8 @@ class RaptorRun:
 
     @property
     def kind(self) -> str:
-        """Derive a short kind from the command (scan / fuzz / agentic / codeql / validate)."""
-        cmd = (self.command or "").lower()
-        for kind in ("agentic", "codeql", "fuzz", "scan", "validate", "patch", "exploit"):
-            if kind in cmd:
-                return kind
-        return "other"
+        """Canonical kind for this run — see `services/run_kind.classify`."""
+        return classify_kind(self.command, self.directory.name)
 
     def findings(self) -> list[dict]:
         for filename in FINDINGS_FILENAMES:

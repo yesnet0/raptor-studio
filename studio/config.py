@@ -25,5 +25,9 @@ STUDIO_DATA_DIR = Path(
     os.environ.get("STUDIO_DATA_DIR", Path.home() / ".raptor-studio")
 )
 
+RAPTOR_MODELS_CONFIG = Path(
+    os.environ.get("RAPTOR_MODELS_CONFIG", Path.home() / ".config" / "raptor" / "models.json")
+)
+
 APP_TITLE = "raptor studio"
 APP_TAGLINE = "See through the code."
