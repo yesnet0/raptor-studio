@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="/static/velociraptor.png">
 <style>
 /* Vulngraph-derived CSS grammar, retargeted for raptor's terminal heritage.
    Visual identity deferred; palette is placeholder. */
@@ -65,11 +66,20 @@ nav.top .brand {
   font-weight: 700; font-size: 15px; letter-spacing: -0.01em;
 }
 nav.top .brand .mark {
-  width: 26px; height: 26px; border-radius: 6px;
-  background: var(--accent);
+  width: 32px; height: 32px;
   display: inline-flex; align-items: center; justify-content: center;
-  color: white; font-family: "JetBrains Mono", monospace;
-  font-weight: 700; font-size: 14px;
+  flex-shrink: 0;
+}
+nav.top .brand .mark img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  /* PNG has white background; it visually fades against the near-white
+     light theme. In dark mode we invert so white→black (fades against the
+     dark bg) and the gray raptor becomes near-white. */
+  image-rendering: pixelated;
+}
+[data-theme="dark"] nav.top .brand .mark img {
+  filter: invert(1);
 }
 nav.top .links { display: flex; gap: 16px; }
 nav.top .links a {
@@ -204,7 +214,7 @@ footer.foot {
 <body>
 <nav class="top">
   <div class="brand">
-    <span class="mark">R</span>
+    <span class="mark"><img src="/static/velociraptor.png" alt="raptor studio"></span>
     <span>{{ app_title }}</span>
   </div>
   <div class="links">
