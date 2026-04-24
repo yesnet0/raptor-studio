@@ -1,5 +1,8 @@
 # raptor-studio — Product Requirements
 
+> **Upstream PR open**: [gadievron/raptor#215](https://github.com/gadievron/raptor/pull/215) proposes absorbing this as `packages/studio/`. This repo remains the standalone companion regardless of the PR outcome.
+
+
 Status: **v0.0.1 — functionally complete, pre-absorption.**
 Last updated: 2026-04-23 (commit `cd58dc9`).
 

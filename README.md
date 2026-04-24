@@ -2,11 +2,11 @@
 
 Web UI for [raptor](https://github.com/gadievron/raptor). Browse findings, trigger scans / fuzz / forensics, watch runs live, diff project versions, review exploit PoCs — without leaving the browser.
 
-Companion project. Reads and writes raptor's project data (`~/.raptor/projects/*.json` + per-run output directories); projects created here are fully interchangeable with `raptor project create`. Eventual target: absorb into raptor upstream as `packages/studio/`.
+Companion project. Reads and writes raptor's project data (`~/.raptor/projects/*.json` + per-run output directories); projects created here are fully interchangeable with `raptor project create`.
 
-**Status**: v0.0.1 — functionally complete, pre-absorption. 15 commits on `main`. 144 pytest pass + 1 skipped.
+**Status**: proposed for in-tree absorption — **upstream PR: [gadievron/raptor#215](https://github.com/gadievron/raptor/pull/215)**. This repo remains the standalone companion (with the full 27-commit history) regardless of the PR outcome.
 
-Design doc: [`docs/PRD.md`](docs/PRD.md). Design narrative: [`docs/UX_RECONCILIATION.md`](docs/UX_RECONCILIATION.md). Change log: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
+Docs: [`PRD.md`](docs/PRD.md) · [`FAQ.md`](docs/FAQ.md) (maintainer review questions) · [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) (call-flow) · [`UX_RECONCILIATION.md`](docs/UX_RECONCILIATION.md) (design narrative) · [`CHANGELOG.md`](docs/CHANGELOG.md).
 
 ---
 
