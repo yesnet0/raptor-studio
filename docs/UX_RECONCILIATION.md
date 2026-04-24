@@ -194,6 +194,36 @@ End-to-end HTTP verified across the pass:
 - **Forensics**: seeded a synthetic oss-forensics run with three hypothesis iterations (one refuted, one confirmed, one neutral) and four evidence sources; 8/8 content checks pass including confirmed + rejected badges and evidence count table.
 - **Personas**: seeded three findings of different types (memory-corruption with feasibility, sqli, codeql auth_bypass); each shows the correct specialist cards, `/personas` lists all 10 briefs with load-state.
 
+## Shipped in the project-types + Claude-backed-triggers pass (commit `6a86777`)
+
+- **Typed projects** — `/projects/new` gains a 3-card picker (Source analysis / Binary fuzzing / OSS forensics). Form adapts per type: target label + placeholder swap between "Repository path", "Binary path", "GitHub URL"; type-specific fields surface (CodeQL language for source, optional source-repo for binary, Research question for forensics).
+- **URL targets preserved** — forensics projects skip `Path.resolve()` so GitHub URLs aren't mangled. Raptor's schema validator still accepts them because it just requires a non-empty string.
+- **Studio sidecar** — `services/project_extras.py` persists `(type, binary, focus, language)` to `$STUDIO_DATA_DIR/project-extras/<name>.json`. Raptor's CLI ignores it; studio uses it to drive the adaptive sidebar and smart defaults on trigger forms.
+- **Claude-backed triggers** — the four kinds that previously showed only a CLI hint (`understand`, `validate`, `oss-forensics`, `crash-analysis`) now trigger via the job queue. Worker wraps them as `bash -c "raptor project use <name> && claude -p '<slash-command>'"`. Form shows a "REQUIRES CLAUDE CODE" badge; Equivalent CLI preview reads the real bash wrapper.
+- Tests: 135 → 144. Added `test_project_extras` (10), extended `test_run_spec` coverage.
+
+## Shipped in the newcomer UX pass (commit `ace3ef8`)
+
+Design thesis for this pass, from the user's brief:
+
+> Optimize for making it easy to use for new users, without dumbing it down. Surface the options without being overwhelming.
+
+Six concrete moves, each with a named principle:
+
+1. **Welcoming zero-state on the Dashboard** — *replace empty-screen paralysis with one focused next step.* When `stats.projects == 0` the four `0`-KPIs and empty tables disappear; a single centered welcome card takes over with the velociraptor mark, tagline, big "Create your first project →" button, 5-bullet "What you can do here" list, and a collapsed `<details>` hint for users who already have raptor projects at a non-default `RAPTOR_PROJECTS_DIR`. When projects exist, the previously dead "read-only / Mode" KPI is replaced by a live "Worker: idle / N live" KPI tied to the running-run count.
+
+2. **Progressive disclosure on `/projects/new`** — *show essentials, tuck power into "More options".* Essentials visible: type cards, Name, Target, Description. Everything else (Notes, Output directory, CodeQL language, source-repo sidecar, focus) folds into `<details>` "Advanced options", default-closed, auto-open on form replay if any advanced field has a value. Smart-default JS: when Name is empty and Target is edited, auto-fill Name with the target's basename (or URL's last path segment, minus `.git`), sanitised to raptor's name regex.
+
+3. **Type-adaptive sidebar** — *scope reveals itself from context.* `project_base.html` reads `project.kind` (from sidecar or inferred from runs). For typed projects, the relevant lane renders prominently and the other two lanes tuck into a collapsed "Other capabilities" `<details>`. Auto-opens if the active stage is inside a hidden lane. Untyped projects keep today's three-lane layout. Typed projects drop from 13 visible sidebar items to ~7.
+
+4. **Contextual empty-state CTAs** — *an empty page should answer "what now?".* `/findings`, `/runs`, `/exploits`, `/patches`, `/reports` stop being silent when empty. Each shows a card naming what's missing, explaining when it fills, and deep-linking to the single most likely next action for this project's kind (scan for source, fuzz for binary, oss-forensics for forensics).
+
+5. **Progressive disclosure on trigger forms** — *defaults first, overrides on demand.* `project_new_run.html` splits fields into Essentials (required or sole field) and Advanced (rest). Advanced is a `<details>` with badge count, default-collapsed, localStorage-sticky per kind so a returning user's preference persists. For fuzz: duration stays essential, the other 5 fields collapse.
+
+6. **Glossary + inline `<abbr>` tooltips** — *name a concept, always define it once.* New `/glossary` page with six grouped cards covering finding lifecycle, validation stages A–F, binary-exploit anatomy, scanner output (CWE/SARIF/dataflow), pipelines/lanes, and personas. Footer link from every page. Inline `<abbr>` tooltips with dotted-underline styling in `_finding_detail.html` on the most opaque terms: "Stage E", "Chain breaks", "Exploitation paths".
+
+All template + routing. Zero service-layer change. Tests unchanged because the underlying behavior is identical — just a friendlier surface.
+
 ## Constraint: do not modify vulngraph
 
 Vulngraph is referenced read-only at `~/Projects/vulngraph/vulngraph/web/`. We borrow layout grammar and CSS idioms. We do not import, link, or copy whole templates.
