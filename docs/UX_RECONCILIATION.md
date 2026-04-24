@@ -181,6 +181,19 @@ Tests: 78 → 103. New: `test_run_spec` (11), `test_jobs` (9), `test_worker_inte
 
 End-to-end verified via TestClient: GET new-run form → POST → 303 redirect to `/jobs/{id}` → worker picks up → subprocess completes → log captured → detail page + project jobs list + API log endpoint all show the job correctly.
 
+## Shipped in the diff + forensics + personas pass
+
+- **Run diff** (`services/diff_reader.py`) classifies findings across two runs by identity tuple `(file, line, normalized_vuln_type)` — matching raptor's SARIF dedup rule — into `new` / `carried` / `resolved`. Carried findings surface status + verdict transitions (e.g., `pending → exploitable`). Route `/projects/{name}/diff?a=&b=` with two dropdowns and three coloured result tables. Sidebar adds a "Diff" entry under Navigation.
+- **OSS forensics walkthrough** (`services/forensics_reader.py`) reads the artifacts an `/oss-forensics` run emits (`evidence.json`, `evidence-verification-report.md`, `hypothesis-*.md` iterations, `forensic-report.md`). `run_detail.html` gains a dedicated walkthrough card when the run is oss-forensics: research question highlighted, evidence-source count table, hypothesis timeline as collapsible cards with confirmed/rejected badges derived from filename hints, collapsible verification report, final forensic report in a prominent box.
+- **Expert personas** (`services/personas.py`) reads the 10 markdown briefs at `$RAPTOR_HOME/tiers/personas/*.md`. `personas_for_finding(f)` ranks relevant personas by vuln category (memory-corruption → binary specialists; web → pen tester), tool origin (`tool=codeql` → CodeQL analysts), final status (`exploitable` → exploit developer + patch engineer), filename hints (`afl_output/crashes/*` → fuzzing strategist). Inline cards on every expanded finding detail (capped at 4); full `/personas` browser page via top nav.
+
+Tests: 103 → 128 (+1 skipped). Added `test_diff_reader` (9), `test_forensics_reader` (7), `test_personas` (10).
+
+End-to-end HTTP verified across the pass:
+- **Diff**: seeded two runs with overlapping + status-upgraded + resolved + new findings → all four buckets render correctly; error paths handle same-run and missing-run selections.
+- **Forensics**: seeded a synthetic oss-forensics run with three hypothesis iterations (one refuted, one confirmed, one neutral) and four evidence sources; 8/8 content checks pass including confirmed + rejected badges and evidence count table.
+- **Personas**: seeded three findings of different types (memory-corruption with feasibility, sqli, codeql auth_bypass); each shows the correct specialist cards, `/personas` lists all 10 briefs with load-state.
+
 ## Constraint: do not modify vulngraph
 
 Vulngraph is referenced read-only at `~/Projects/vulngraph/vulngraph/web/`. We borrow layout grammar and CSS idioms. We do not import, link, or copy whole templates.
