@@ -126,3 +126,28 @@
   </div>
 </div>
 {% endif %}
+
+{% set relevant_personas = personas_for(f) %}
+{% if relevant_personas %}
+<div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border-l);">
+  {{ label("Relevant expert perspectives") }}
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; margin-top: 8px;">
+  {% for p in relevant_personas %}
+    <details style="border: 1px solid var(--border-l); border-radius: 6px; padding: 10px 12px; background: var(--bg);">
+      <summary style="cursor: pointer;">
+        <div style="font-size: 12px; font-weight: 600; color: var(--fg);">{{ p.label }}{% if p.handle %} <span style="font-weight: 400; color: var(--fg3); font-style: italic;">· {{ p.handle }}</span>{% endif %}</div>
+        <div style="font-size: 11px; color: var(--fg2); margin-top: 2px;">{{ p.use_when }}</div>
+      </summary>
+      {% if p.content %}
+      <pre style="margin: 10px 0 0; max-height: 240px; overflow: auto; font-size: 10px;">{{ p.content }}</pre>
+      <div style="font-size: 10px; color: var(--fg3); margin-top: 6px;">
+        From <code class="mono">tiers/personas/{{ p.key }}.md</code> · invoke in raptor: <code class="mono">"Use {{ p.label|lower }} persona to …"</code>
+      </div>
+      {% else %}
+      <div style="margin-top: 10px; font-size: 11px; color: var(--fg3);">Persona file not found at <code class="mono">$RAPTOR_HOME/tiers/personas/{{ p.key }}.md</code>.</div>
+      {% endif %}
+    </details>
+  {% endfor %}
+  </div>
+</div>
+{% endif %}

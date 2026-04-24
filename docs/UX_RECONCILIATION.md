@@ -154,14 +154,14 @@ All of the below landed across two commits (`42ac26a`, `a follow-up`):
 8. **Tests.** 23 → 78 (16 run_kind, 10 models_reader, 7 artifacts_reader, 6 sarif_reader, 6 validation_reader, 9 existing). All green.
 9. **End-to-end.** 10/10 content-checks pass against a seeded project with a SARIF-only scan, a rich `/validate` run (full artifact bundle), and a `/fuzz` run (fuzzing_report + AFL crashes).
 
-## What this iteration does not ship (punch-list for later)
+## Remaining punch-list
 
-- Run-diff view (needs identity model across runs)
 - Coverage view (needs `gcov` reader and `checked_by` merge)
-- OSS forensics lane detail (requires BigQuery/Wayback readers)
-- Personas panel (context cards tied to finding type)
+- First-class rendering of raptor's dataflow SVG diagrams (`dataflow_*.svg`)
+- Markdown rendering for `*.md` reports instead of raw `<pre>` blocks
+- Auth / multi-user (raptor is single-user by design)
 
-These are each an increment. The IA accommodates them.
+Shipped: three-lane IA, findings schema, SARIF fallback, run-detail page, validation bundle reader, attack-surface Mermaid, settings page, create-project, run triggering, SSE log streaming, run diff, OSS forensics walkthrough, per-persona panels.
 
 ## Shipped in the job-triggering pass
 

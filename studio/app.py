@@ -41,6 +41,7 @@ from studio.services.run_spec import (
 )
 from studio.services.diff_reader import compute_diff
 from studio.services.forensics_reader import is_forensics_run_dir, load_forensics_bundle
+from studio.services.personas import all_personas, personas_for_finding
 from studio.services.validation_reader import load_validation_bundle, summarize_run
 from studio.services.models_reader import (
     PROVIDERS,
@@ -66,6 +67,10 @@ from studio.services.run_kind import (
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+# Expose personas_for_finding globally to templates so _finding_detail.html
+# can render persona cards inline without every route having to pass it.
+templates.env.globals["personas_for"] = personas_for_finding
 
 app = FastAPI(title=APP_TITLE)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -595,6 +600,14 @@ def _settings_ctx(**overrides):
 @app.get("/settings", response_class=HTMLResponse)
 def settings_page(request: Request):
     return templates.TemplateResponse(request, "settings.html", _settings_ctx())
+
+
+@app.get("/personas", response_class=HTMLResponse)
+def personas_page(request: Request):
+    return templates.TemplateResponse(
+        request, "personas.html",
+        _ctx(personas=all_personas(), raptor_home=str(RAPTOR_HOME)),
+    )
 
 
 @app.post("/settings")

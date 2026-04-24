@@ -75,9 +75,9 @@ Phase 2 (interactive):
 - [x] Save model configuration
 - [x] Scan / agentic / codeql / fuzz trigger from UI (SQLite-backed job queue + subprocess worker)
 - [x] Live run monitoring (SSE tailing `$STUDIO_DATA_DIR/job-logs/<id>.log`)
-- [ ] Run diff (resolved / carried / new findings)
-- [ ] OSS forensics walkthrough
-- [ ] Per-persona panels on finding pages
+- [x] Run diff (resolved / carried / new findings by `(file, line, vuln_type)` identity)
+- [x] OSS forensics walkthrough (research question → evidence → hypothesis timeline → final report)
+- [x] Per-persona panels on finding pages + `/personas` browser
 
 Phase 3 (upstream):
 - [ ] Issue on gadievron/raptor proposing absorption as `packages/studio/`
