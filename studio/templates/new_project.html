@@ -77,12 +77,21 @@
     <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
 
       <label data-show-for="binary">
-        <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Source repo <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
-        <input name="binary" type="text"
-               value="{{ form.binary or '' }}"
-               placeholder="Not typical — use if you also want to scan the source this binary was built from"
+        <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Seed corpus directory <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+        <input name="corpus_dir" type="text"
+               value="{{ form.corpus_dir or '' }}"
+               placeholder="/path/to/seed-inputs"
                style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
-        <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Rarely needed. Only set if you want this project to also run source scans against a separate directory.</div>
+        <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Directory of input files AFL++ starts from. If left blank, use <code class="mono">--autonomous</code> on the fuzz form to have raptor generate seeds from binary strings.</div>
+      </label>
+
+      <label data-show-for="binary">
+        <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Secondary source repo <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+        <input name="source_repo" type="text"
+               value="{{ form.source_repo or form.binary or '' }}"
+               placeholder="/path/to/source — only if you also want to run source scans against it"
+               style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+        <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Rarely needed. Set when the binary has corresponding source you also want CodeQL / Semgrep to analyse.</div>
       </label>
 
       <label data-show-for="forensics">
@@ -92,6 +101,15 @@
                placeholder='e.g. "What happened with the July 13 incident on this repo?"'
                style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 13px;">
         <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">Framing question for the forensic investigation. Passed through to <code class="mono">/oss-forensics</code> when you trigger it.</div>
+      </label>
+
+      <label data-show-for="forensics">
+        <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Vendor report URL <span style="color: var(--fg3); font-weight: 400;">(optional)</span></div>
+        <input name="vendor_report_url" type="text"
+               value="{{ form.vendor_report_url or '' }}"
+               placeholder="https://example.com/vendor-report.html"
+               style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+        <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">URL of a vendor's incident report you want to validate against independent evidence. Appended to the <code class="mono">/oss-forensics</code> prompt when set.</div>
       </label>
 
       <label data-show-for="source">

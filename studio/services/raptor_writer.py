@@ -47,9 +47,12 @@ def create_project(
     output_dir: Optional[str] = None,
     notes: str = "",
     project_type: Optional[str] = None,
-    binary: str = "",
+    source_repo: str = "",
     focus: str = "",
+    vendor_report_url: str = "",
     language: str = "",
+    corpus_dir: str = "",
+    binary: str = "",  # deprecated alias for source_repo; kept for backward compat
     projects_dir: Path = RAPTOR_PROJECTS_DIR,
     output_base: Path = RAPTOR_OUTPUT_BASE,
     studio_dir: Optional[Path] = None,
@@ -116,18 +119,23 @@ def create_project(
     project_file.write_text(json.dumps(data, indent=2) + "\n")
 
     # Studio sidecar — optional extras that don't fit raptor's schema.
+    # source_repo supersedes the legacy ``binary`` alias.
+    effective_source_repo = source_repo or binary
     extras = extras_service.ProjectExtras(
         type=project_type,
-        binary=(str(Path(binary).expanduser().resolve()) if binary else ""),
+        source_repo=(str(Path(effective_source_repo).expanduser().resolve())
+                     if effective_source_repo else ""),
         focus=focus or "",
+        vendor_report_url=vendor_report_url or "",
         language=language or "",
+        corpus_dir=(str(Path(corpus_dir).expanduser().resolve()) if corpus_dir else ""),
         created_via="studio",
     )
     if not extras.is_empty:
-        extras_service.save(
-            name, extras,
-            studio_dir=studio_dir if studio_dir is not None else None,
-        ) if studio_dir is not None else extras_service.save(name, extras)
+        if studio_dir is not None:
+            extras_service.save(name, extras, studio_dir=studio_dir)
+        else:
+            extras_service.save(name, extras)
 
     return RaptorProject(
         name=name,

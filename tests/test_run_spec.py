@@ -54,6 +54,30 @@ def test_oss_forensics_includes_focus_in_prompt(tmp_path: Path):
     assert "github.com/owner/repo" in argv[2]
 
 
+def test_oss_forensics_appends_vendor_report_url(tmp_path: Path):
+    argv = build_command(
+        "oss-forensics",
+        "https://github.com/owner/repo",
+        tmp_path,
+        {"focus": "incident", "vendor_report_url": "https://vendor/report.html"},
+        project_name="p",
+    )
+    assert "validate claims in https://vendor/report.html" in argv[2]
+    assert "github.com/owner/repo" in argv[2]
+
+
+def test_oss_forensics_bare_url_when_no_focus_or_vendor(tmp_path: Path):
+    argv = build_command(
+        "oss-forensics",
+        "https://github.com/owner/repo",
+        tmp_path,
+        {},
+        project_name="p",
+    )
+    # When neither focus nor vendor, pass the URL bare (no quotes-with-dashes).
+    assert "github.com/owner/repo" in argv[2]
+
+
 def test_crash_analysis_requires_both_urls(tmp_path: Path):
     with pytest.raises(ValueError, match="bug_url"):
         build_command("crash-analysis", "", tmp_path, {}, project_name="p")

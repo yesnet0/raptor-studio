@@ -280,9 +280,15 @@ def _compose_slash_command(
             parts += ["--vuln-type", values["vuln_type"]]
     elif spec.kind == "oss-forensics":
         focus = values.get("focus") or ""
+        vendor = values.get("vendor_report_url") or ""
         url = target
+        prompt_bits = [url]
         if focus:
-            parts.append(f'"{url} — {focus}"')
+            prompt_bits.append(focus)
+        if vendor:
+            prompt_bits.append(f"validate claims in {vendor}")
+        if len(prompt_bits) > 1:
+            parts.append('"' + " — ".join(prompt_bits) + '"')
         else:
             parts.append(url)
         if values.get("max_followups"):

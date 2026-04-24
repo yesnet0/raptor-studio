@@ -181,9 +181,13 @@ def new_project_form(request: Request):
 @app.post("/projects/new")
 async def new_project_submit(request: Request):
     form = await request.form()
-    raw = {k: (form.get(k) or "").strip() for k in
-           ("name", "target", "description", "output_dir", "notes",
-            "project_type", "binary", "focus", "language")}
+    raw = {k: (form.get(k) or "").strip() for k in (
+        "name", "target", "description", "output_dir", "notes",
+        "project_type",
+        "source_repo", "binary",           # binary kept for back-compat
+        "focus", "vendor_report_url",
+        "language", "corpus_dir",
+    )}
 
     try:
         proj = create_project(
@@ -193,9 +197,11 @@ async def new_project_submit(request: Request):
             output_dir=raw["output_dir"] or None,
             notes=raw["notes"],
             project_type=raw["project_type"] or None,
-            binary=raw["binary"],
+            source_repo=raw["source_repo"] or raw["binary"],
             focus=raw["focus"],
+            vendor_report_url=raw["vendor_report_url"],
             language=raw["language"],
+            corpus_dir=raw["corpus_dir"],
         )
     except ProjectCreateError as e:
         return templates.TemplateResponse(
@@ -382,11 +388,26 @@ def _preview_flags(kind: str, form_values: dict, target: str, project_name: str 
 
 
 def _default_target_for(kind: str, proj: RaptorProject) -> str:
-    """Pick a sensible default target for the new-run form based on kind."""
-    spec = RUNNABLE_KINDS.get(kind)
-    if spec and spec.target_arg == "--binary":
-        return proj.extras.binary or proj.target
+    """Pick a sensible default target for the new-run form based on kind.
+
+    For ``--binary`` kinds the project's ``target`` is already the binary
+    (for type=binary projects); no sidecar lookup needed.
+    """
     return proj.target
+
+
+def _default_run_values(kind: str, proj: RaptorProject) -> dict[str, str]:
+    """Seed the new-run form with project-level defaults from ProjectExtras."""
+    out: dict[str, str] = {}
+    if kind == "oss-forensics":
+        if proj.extras.focus:
+            out["focus"] = proj.extras.focus
+        if proj.extras.vendor_report_url:
+            out["vendor_report_url"] = proj.extras.vendor_report_url
+    elif kind == "fuzz":
+        if proj.extras.corpus_dir:
+            out["corpus"] = proj.extras.corpus_dir
+    return out
 
 
 @app.get("/projects/{name}/{kind}/new", response_class=HTMLResponse)
@@ -396,9 +417,7 @@ def new_run_form(request: Request, name: str, kind: str):
     proj = _require_project(name)
     spec = RUNNABLE_KINDS[kind]
     default_target = _default_target_for(kind, proj)
-    default_values = {}
-    if kind == "oss-forensics" and proj.extras.focus:
-        default_values["focus"] = proj.extras.focus
+    default_values = _default_run_values(kind, proj)
     return templates.TemplateResponse(
         request, "project_new_run.html",
         _project_ctx(
@@ -422,6 +441,11 @@ async def new_run_submit(request: Request, name: str, kind: str):
 
     target = (form.get("target") or "").strip() or _default_target_for(kind, proj)
     values = {f.name: (form.get(f.name) or "").strip() for f in spec.fields}
+
+    # Merge project-level defaults that aren't user-overridable in this form
+    # (e.g. OSS-forensics vendor_report_url lives on the project, not the run).
+    for k, v in _default_run_values(kind, proj).items():
+        values.setdefault(k, v)
 
     try:
         argv = build_command(kind, target, RAPTOR_HOME, values, project_name=proj.name)

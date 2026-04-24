@@ -74,8 +74,38 @@ def test_project_extras_is_empty_property():
 
 
 def test_to_dict_shape():
-    extras = ProjectExtras(type="binary", binary="/tmp/bin", focus="", language="", created_via="studio")
+    extras = ProjectExtras(
+        type="binary", source_repo="/tmp/src", corpus_dir="/tmp/corpus",
+        focus="", language="", created_via="studio",
+    )
     d = extras.to_dict()
     assert d["type"] == "binary"
-    assert d["binary"] == "/tmp/bin"
+    assert d["source_repo"] == "/tmp/src"
+    assert d["corpus_dir"] == "/tmp/corpus"
     assert d["created_via"] == "studio"
+
+
+def test_backcompat_reads_old_binary_field(tmp_path):
+    """Old sidecars used 'binary' for what is really a secondary source repo."""
+    from studio.services.project_extras import load
+    sidecar = tmp_path / "project-extras" / "legacy.json"
+    sidecar.parent.mkdir()
+    import json
+    sidecar.write_text(json.dumps({
+        "type": "binary", "binary": "/tmp/old-source-path",
+    }))
+    extras = load("legacy", studio_dir=tmp_path)
+    assert extras.source_repo == "/tmp/old-source-path"
+    # And the legacy .binary alias still works for any remaining callers
+    assert extras.binary == "/tmp/old-source-path"
+
+
+def test_new_fields_roundtrip(tmp_path):
+    from studio.services.project_extras import load, save
+    save("full", ProjectExtras(
+        type="forensics", vendor_report_url="https://vendor/report.html",
+        focus="July incident", corpus_dir="",
+    ), studio_dir=tmp_path)
+    loaded = load("full", studio_dir=tmp_path)
+    assert loaded.vendor_report_url == "https://vendor/report.html"
+    assert loaded.focus == "July incident"

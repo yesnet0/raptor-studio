@@ -44,23 +44,43 @@ PROJECT_TYPE_DESCRIPTIONS = {
 @dataclass
 class ProjectExtras:
     type: Optional[str] = None
-    binary: str = ""
+    # Path to a secondary source repository, used by binary-type projects that
+    # also want to run source analysis against the source tree the binary was
+    # built from. Field was previously named ``binary`` (misleading) — the
+    # reader accepts either on load for backward compatibility.
+    source_repo: str = ""
+    # Forensics-type extras
     focus: str = ""
+    vendor_report_url: str = ""
+    # Source-type extras
     language: str = ""
+    # Binary-type extras
+    corpus_dir: str = ""
     created_via: str = ""  # "studio" | "raptor-cli" | ""
 
     def to_dict(self) -> dict:
         return {
             "type": self.type,
-            "binary": self.binary,
+            "source_repo": self.source_repo,
             "focus": self.focus,
+            "vendor_report_url": self.vendor_report_url,
             "language": self.language,
+            "corpus_dir": self.corpus_dir,
             "created_via": self.created_via,
         }
 
     @property
     def is_empty(self) -> bool:
-        return not any([self.type, self.binary, self.focus, self.language, self.created_via])
+        return not any([
+            self.type, self.source_repo, self.focus, self.vendor_report_url,
+            self.language, self.corpus_dir, self.created_via,
+        ])
+
+    # Backward-compat alias so existing call sites that read ``.binary``
+    # keep working while we migrate. Do not use in new code.
+    @property
+    def binary(self) -> str:
+        return self.source_repo
 
 
 def _sidecar_path(name: str, studio_dir: Path = STUDIO_DATA_DIR) -> Path:
@@ -77,11 +97,16 @@ def load(name: str, studio_dir: Path = STUDIO_DATA_DIR) -> ProjectExtras:
         return ProjectExtras()
     if not isinstance(data, dict):
         return ProjectExtras()
+    # Back-compat: the sidecar used to write ``binary`` for what is really a
+    # secondary source-repo path. Prefer the new key; fall back to the old.
+    source_repo = data.get("source_repo") or data.get("binary") or ""
     return ProjectExtras(
         type=data.get("type") or None,
-        binary=data.get("binary", "") or "",
+        source_repo=source_repo,
         focus=data.get("focus", "") or "",
+        vendor_report_url=data.get("vendor_report_url", "") or "",
         language=data.get("language", "") or "",
+        corpus_dir=data.get("corpus_dir", "") or "",
         created_via=data.get("created_via", "") or "",
     )
 
