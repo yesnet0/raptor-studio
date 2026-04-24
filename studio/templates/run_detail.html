@@ -110,6 +110,69 @@
 </div>
 {% endif %}
 
+{% if bundle and bundle.attack_surface %}
+<div class="card" style="margin-bottom: 16px;">
+  <h2 style="margin: 0 0 10px; font-size: 14px;">Attack surface</h2>
+  <div style="font-size: 12px; color: var(--fg2); margin-bottom: 12px;">
+    Sources, sinks, and trust boundaries discovered during validation.
+  </div>
+
+  {% set surf = bundle.attack_surface %}
+  {% if surf.sources or surf.sinks %}
+  <div class="mermaid" style="background: var(--bg); padding: 12px; border-radius: 6px; border: 1px solid var(--border-l); margin-bottom: 16px;">
+flowchart LR
+{% for s in (surf.sources or [])[:8] %}
+    src{{ loop.index }}["{{ s|replace('"', '&quot;')|truncate(36, True, '…') }}"]
+{% endfor %}
+{% for b in (surf.trust_boundaries or [])[:8] %}
+    tb{{ loop.index }}{{ "{" }}{{ b|replace('"', '&quot;')|truncate(36, True, '…') }}{{ "}" }}
+{% endfor %}
+{% for k in (surf.sinks or [])[:8] %}
+    snk{{ loop.index }}[("{{ k|replace('"', '&quot;')|truncate(36, True, '…') }}")]
+{% endfor %}
+{% for s in (surf.sources or [])[:8] %}
+{% for b in (surf.trust_boundaries or [])[:8] %}
+    src{{ loop.index }} --> tb{{ loop.index }}
+{% endfor %}
+{% endfor %}
+{% for b in (surf.trust_boundaries or [])[:8] %}
+{% for k in (surf.sinks or [])[:8] %}
+    tb{{ loop.index }} --> snk{{ loop.index }}
+{% endfor %}
+{% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="grid g3">
+    <div>
+      <div style="font-size: 11px; color: var(--fg3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">Sources ({{ (surf.sources or [])|length }})</div>
+      <ul style="margin: 0; padding-left: 20px; font-size: 12px;">
+      {% for s in (surf.sources or [])[:12] %}<li class="mono">{{ s }}</li>{% endfor %}
+      </ul>
+    </div>
+    <div>
+      <div style="font-size: 11px; color: var(--fg3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">Sinks ({{ (surf.sinks or [])|length }})</div>
+      <ul style="margin: 0; padding-left: 20px; font-size: 12px;">
+      {% for s in (surf.sinks or [])[:12] %}<li class="mono">{{ s }}</li>{% endfor %}
+      </ul>
+    </div>
+    <div>
+      <div style="font-size: 11px; color: var(--fg3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">Trust boundaries ({{ (surf.trust_boundaries or [])|length }})</div>
+      <ul style="margin: 0; padding-left: 20px; font-size: 12px;">
+      {% for b in (surf.trust_boundaries or [])[:12] %}<li class="mono">{{ b }}</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if bundle and bundle.report_md %}
+<div class="card" style="margin-bottom: 16px;">
+  <h2 style="margin: 0 0 10px; font-size: 14px;">validation-report.md</h2>
+  <pre style="font-size: 12px; max-height: 400px; overflow: auto; margin: 0;">{{ bundle.report_md }}</pre>
+</div>
+{% endif %}
+
 {% if summary.has_reports %}
 <div class="card" style="margin-bottom: 16px;">
   <h2 style="margin: 0 0 10px; font-size: 14px;">Report files</h2>
@@ -130,6 +193,14 @@
   {% endfor %}
   </ul>
 </div>
+{% endif %}
+
+{% if bundle and bundle.attack_surface %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  const _theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: _theme, securityLevel: 'strict' });
+</script>
 {% endif %}
 
 {% endblock %}

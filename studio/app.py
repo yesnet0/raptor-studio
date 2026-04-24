@@ -28,7 +28,7 @@ from studio.services.artifacts_reader import (
     list_reports,
     tail_activity,
 )
-from studio.services.validation_reader import summarize_run
+from studio.services.validation_reader import load_validation_bundle, summarize_run
 from studio.services.models_reader import (
     PROVIDERS,
     ROLE_DESCRIPTIONS,
@@ -314,11 +314,13 @@ def _require_run(proj: RaptorProject, run_name: str):
 def run_detail(request: Request, name: str, run_name: str):
     proj = _require_project(name)
     run = _require_run(proj, run_name)
+    summary = summarize_run(run.directory)
+    bundle = load_validation_bundle(run.directory) if summary.has_validation_bundle else None
     return templates.TemplateResponse(
         request, "run_detail.html",
         _project_ctx(
             proj, active_stage="runs",
-            run=run, summary=summarize_run(run.directory),
+            run=run, summary=summary, bundle=bundle,
         ),
     )
 
