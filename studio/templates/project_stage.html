@@ -23,11 +23,14 @@
     <h1 style="margin: 0; font-size: 22px; letter-spacing: -0.01em;">{{ stage_label }}</h1>
     <div style="color: var(--fg2); font-size: 13px; margin-top: 4px;">{{ stage_desc }}</div>
   </div>
-  <div style="display: flex; gap: 8px;">
+  <div style="display: flex; gap: 8px; align-items: center;">
     {% if stage_runs %}
     <span class="badge b-ok">{{ stage_runs|length }} run{{ 's' if stage_runs|length != 1 else '' }}</span>
     {% else %}
     <span class="badge b-neutral">no runs yet</span>
+    {% endif %}
+    {% if is_runnable %}
+    <a href="/projects/{{ project.name }}/{{ stage_key }}/new" class="btn btn-p">+ New run</a>
     {% endif %}
   </div>
 </div>

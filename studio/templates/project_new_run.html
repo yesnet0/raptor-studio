@@ -1,0 +1,81 @@
+{% extends "project_base.html" %}
+{% block title %}New {{ spec.kind }} run — {{ project.name }} — {{ app_title }}{% endblock %}
+{% block breadcrumb_tail %}
+  <span class="sep">›</span>
+  <a href="/projects/{{ project.name }}/{{ spec.kind }}">{{ spec.label }}</a>
+  <span class="sep">›</span>
+  <span class="current">New run</span>
+{% endblock %}
+{% block project_content %}
+
+<h1 style="margin: 0; font-size: 22px;">{{ spec.label }}</h1>
+<div style="color: var(--fg2); font-size: 13px; margin: 4px 0 16px;">{{ spec.description }}</div>
+
+{% if error %}
+<div class="card" style="border-color: var(--crit); background: rgba(211,47,47,0.08); margin-bottom: 16px;">
+  <strong style="color: var(--crit);">Error:</strong> {{ error }}
+</div>
+{% endif %}
+
+<div class="card" style="max-width: 720px;">
+<form method="post" action="/projects/{{ project.name }}/{{ spec.kind }}/new" style="display: flex; flex-direction: column; gap: 14px;">
+
+  <label>
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 4px;">
+      Target {% if spec.target_arg == "--binary" %}(binary){% else %}(repo){% endif %}
+    </div>
+    <input name="target" type="text" required
+           value="{{ form.target or project.target }}"
+           placeholder="{% if spec.target_arg == '--binary' %}/absolute/path/to/binary{% else %}/absolute/path/to/repo{% endif %}"
+           style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+    <div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">
+      {% if spec.target_arg == "--binary" %}Path to the compiled binary to fuzz. The project's <code class="mono">target</code> points at source, which is probably what you want to build first.{% else %}Defaults to the project's target path.{% endif %}
+    </div>
+  </label>
+
+  {% for f in spec.fields %}
+  <label>
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 4px;">
+      {{ f.label }}{% if f.required %} *{% endif %}
+    </div>
+    {% set val = form.get(f.name, f.default) %}
+    {% if f.kind == "select" %}
+      <select name="{{ f.name }}"
+              style="width: 100%; padding: 7px 8px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: inherit; font-size: 13px;">
+        {% for opt in f.options %}
+          <option value="{{ opt }}" {% if opt == val %}selected{% endif %}>{{ opt or "(auto)" }}</option>
+        {% endfor %}
+      </select>
+    {% elif f.kind == "checkbox" %}
+      <input name="{{ f.name }}" type="checkbox" value="on" {% if val %}checked{% endif %}>
+      <span style="font-size: 12px; color: var(--fg2); margin-left: 6px;">enabled</span>
+    {% elif f.kind == "number" %}
+      <input name="{{ f.name }}" type="number" value="{{ val }}" {% if f.required %}required{% endif %}
+             style="width: 160px; padding: 7px 8px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+    {% else %}
+      <input name="{{ f.name }}" type="text" value="{{ val }}"
+             placeholder="{{ f.placeholder }}" {% if f.required %}required{% endif %}
+             style="width: 100%; padding: 7px 8px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+    {% endif %}
+    {% if f.help %}<div style="font-size: 11px; color: var(--fg3); margin-top: 4px;">{{ f.help }}</div>{% endif %}
+  </label>
+  {% endfor %}
+
+  <div style="display: flex; gap: 10px; margin-top: 6px;">
+    <button type="submit" class="btn btn-p">Start run</button>
+    <a href="/projects/{{ project.name }}/{{ spec.kind }}" class="btn">Cancel</a>
+  </div>
+
+  <div style="margin-top: 10px; padding: 10px 12px; background: var(--bg3); border-radius: 6px; border: 1px solid var(--border);">
+    <div style="font-size: 10px; color: var(--fg3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">
+      Equivalent CLI
+    </div>
+    <pre class="mono" style="margin: 0; padding: 0; background: transparent; font-size: 11px; white-space: pre-wrap; word-break: break-all;">python3 {{ spec.script }} {{ spec.target_arg }} {{ form.target or project.target }} {{ preview_flags }}</pre>
+    <div style="font-size: 11px; color: var(--fg3); margin-top: 6px;">
+      Runs from <code class="mono">{{ raptor_home }}</code>. Must have raptor's Python dependencies installed.
+    </div>
+  </div>
+</form>
+</div>
+
+{% endblock %}

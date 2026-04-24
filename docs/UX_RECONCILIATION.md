@@ -156,15 +156,30 @@ All of the below landed across two commits (`42ac26a`, `a follow-up`):
 
 ## What this iteration does not ship (punch-list for later)
 
-- Mermaid attack-surface visualizer (needs `attack-surface.json` parser)
 - Run-diff view (needs identity model across runs)
 - Coverage view (needs `gcov` reader and `checked_by` merge)
 - OSS forensics lane detail (requires BigQuery/Wayback readers)
-- Scan / validate / fuzz triggering from the UI (subprocess wrapper + job queue)
-- Live log tail during a run (JSONL tail → SSE)
 - Personas panel (context cards tied to finding type)
 
 These are each an increment. The IA accommodates them.
+
+## Shipped in the job-triggering pass
+
+- **Job queue** (`services/jobs.py`) backed by SQLite at `$STUDIO_DATA_DIR/jobs.db`. Schema: `(id, project_name, kind, target, argv_json, status, created_at, started_at, finished_at, exit_code, pid, log_path, run_dir, error)`. Status machine: `queued → running → completed|failed|cancelled`.
+- **Background worker** (`services/worker.py`) — daemon thread polling the queue, `subprocess.Popen` with `start_new_session=True` so we can cancel the whole process group, stdout+stderr redirected to `$STUDIO_DATA_DIR/job-logs/<id>.log`.
+- **Run-spec translation** (`services/run_spec.py`) — four runnable kinds with typed form fields (`agentic`, `scan`, `codeql`, `fuzz`). Claude-only kinds (`understand`, `validate`, `oss-forensics`, `crash-analysis`) expose a CLI-hint fallback instead of a runnable form.
+- **UI**:
+  - `+ New run` button on every runnable stage page.
+  - `/projects/{name}/{kind}/new` — typed form with live CLI preview.
+  - `/projects/{name}/jobs` + `/jobs/{id}` — project + detail views.
+  - `/jobs/{id}/cancel` — SIGTERM the process group, mark cancelled.
+- **Live log tail via SSE** — `/api/jobs/{id}/stream` emits `event: log` and `event: status` frames; the job detail page consumes it with `EventSource`, auto-reloads on terminal status. Poll interval 0.4s; tails the log file by byte offset.
+- **Sidebar** gains a "Jobs" entry under "Project".
+- **Lifecycle** — worker `start()` on FastAPI startup, `stop()` on shutdown.
+
+Tests: 78 → 103. New: `test_run_spec` (11), `test_jobs` (9), `test_worker_integration` (4 — actually spawns subprocesses).
+
+End-to-end verified via TestClient: GET new-run form → POST → 303 redirect to `/jobs/{id}` → worker picks up → subprocess completes → log captured → detail page + project jobs list + API log endpoint all show the job correctly.
 
 ## Constraint: do not modify vulngraph
 

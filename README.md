@@ -73,8 +73,8 @@ Phase 1 (raptor-literate read-only):
 Phase 2 (interactive):
 - [x] Create new project (writes raptor-compatible JSON to `~/.raptor/projects/`)
 - [x] Save model configuration
-- [ ] Scan / validate / fuzz trigger from UI (subprocess + job queue)
-- [ ] Live run monitoring (SSE over JSONL log tail)
+- [x] Scan / agentic / codeql / fuzz trigger from UI (SQLite-backed job queue + subprocess worker)
+- [x] Live run monitoring (SSE tailing `$STUDIO_DATA_DIR/job-logs/<id>.log`)
 - [ ] Run diff (resolved / carried / new findings)
 - [ ] OSS forensics walkthrough
 - [ ] Per-persona panels on finding pages

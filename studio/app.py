@@ -7,26 +7,37 @@ Read-write web UI for raptor projects.
 
 from __future__ import annotations
 
+import asyncio
+import json
 from pathlib import Path
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 from fastapi import FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from studio.config import (
     APP_TAGLINE,
     APP_TITLE,
+    RAPTOR_HOME,
     RAPTOR_MODELS_CONFIG,
     RAPTOR_OUTPUT_BASE,
     RAPTOR_PROJECTS_DIR,
 )
+from studio.services import jobs as jobs_service
+from studio.services import worker as worker_service
 from studio.services.artifacts_reader import (
     list_exploits,
     list_patches,
     list_reports,
     tail_activity,
+)
+from studio.services.run_spec import (
+    RUNNABLE_KINDS,
+    UnsupportedKind,
+    build_command,
+    is_runnable,
 )
 from studio.services.validation_reader import load_validation_bundle, summarize_run
 from studio.services.models_reader import (
@@ -220,6 +231,7 @@ def _stage_page(request: Request, name: str, stage: str):
             stage_desc=STAGE_DESCRIPTIONS.get(stage, ""),
             stage_runs=_stage_runs(proj, stage),
             cli_hint=_cli_hint(stage, proj),
+            is_runnable=is_runnable(stage),
         ),
     )
 
@@ -299,6 +311,193 @@ def project_settings(request: Request, name: str):
         request, "project_settings.html",
         _project_ctx(proj, active_stage="settings"),
     )
+
+
+# --- Jobs: trigger + list + detail + cancel + SSE stream -----------------
+
+def _preview_flags(kind: str, form_values: dict, target: str) -> str:
+    try:
+        argv = build_command(kind, target or "<target>", RAPTOR_HOME, form_values)
+    except (UnsupportedKind, ValueError):
+        return ""
+    # Drop "python3 <script>" and the target; show only flags for the preview line.
+    return " ".join(argv[3:]) if len(argv) > 3 else ""
+
+
+@app.get("/projects/{name}/{kind}/new", response_class=HTMLResponse)
+def new_run_form(request: Request, name: str, kind: str):
+    if not is_runnable(kind):
+        raise HTTPException(404, f"Kind '{kind}' cannot be launched from the UI.")
+    proj = _require_project(name)
+    spec = RUNNABLE_KINDS[kind]
+    return templates.TemplateResponse(
+        request, "project_new_run.html",
+        _project_ctx(
+            proj, active_stage=kind,
+            spec=spec,
+            form={"target": proj.target},
+            preview_flags=_preview_flags(kind, {}, proj.target),
+            raptor_home=str(RAPTOR_HOME),
+            error=None,
+        ),
+    )
+
+
+@app.post("/projects/{name}/{kind}/new")
+async def new_run_submit(request: Request, name: str, kind: str):
+    if not is_runnable(kind):
+        raise HTTPException(404, f"Kind '{kind}' cannot be launched from the UI.")
+    proj = _require_project(name)
+    spec = RUNNABLE_KINDS[kind]
+    form = await request.form()
+
+    target = (form.get("target") or "").strip() or proj.target
+    values = {f.name: (form.get(f.name) or "").strip() for f in spec.fields}
+
+    try:
+        argv = build_command(kind, target, RAPTOR_HOME, values)
+    except (UnsupportedKind, ValueError) as e:
+        return templates.TemplateResponse(
+            request, "project_new_run.html",
+            _project_ctx(
+                proj, active_stage=kind,
+                spec=spec, form={"target": target, **values},
+                preview_flags=_preview_flags(kind, values, target),
+                raptor_home=str(RAPTOR_HOME),
+                error=str(e),
+            ),
+            status_code=400,
+        )
+
+    job = jobs_service.Job.new(
+        project_name=proj.name, kind=kind, target=target, argv=argv,
+    )
+    jobs_service.enqueue(job)
+    return RedirectResponse(url=f"/jobs/{job.id}", status_code=303)
+
+
+@app.get("/projects/{name}/jobs", response_class=HTMLResponse)
+def project_jobs(request: Request, name: str):
+    proj = _require_project(name)
+    pjobs = jobs_service.list_jobs(project_name=proj.name, limit=200)
+    return templates.TemplateResponse(
+        request, "project_jobs.html",
+        _project_ctx(proj, active_stage="jobs", project_jobs=pjobs),
+    )
+
+
+@app.get("/jobs/{job_id}", response_class=HTMLResponse)
+def job_detail(request: Request, job_id: str):
+    job = jobs_service.get(job_id)
+    if job is None:
+        raise HTTPException(404, f"job not found: {job_id}")
+    proj = get_project(job.project_name)
+    if proj is None:
+        raise HTTPException(404, f"project for job not found: {job.project_name}")
+
+    log_tail = ""
+    if job.log_path:
+        try:
+            log_tail = Path(job.log_path).read_text()[-16000:]
+        except OSError:
+            log_tail = ""
+
+    return templates.TemplateResponse(
+        request, "job_detail.html",
+        _project_ctx(proj, active_stage="jobs", job=job, log_tail=log_tail),
+    )
+
+
+@app.post("/jobs/{job_id}/cancel")
+def job_cancel(request: Request, job_id: str):
+    job = jobs_service.get(job_id)
+    if job is None:
+        raise HTTPException(404, f"job not found: {job_id}")
+    worker_service.cancel(job_id)
+    return RedirectResponse(url=f"/jobs/{job_id}", status_code=303)
+
+
+@app.get("/api/jobs/{job_id}/log")
+def api_job_log(job_id: str):
+    job = jobs_service.get(job_id)
+    if job is None:
+        raise HTTPException(404, f"job not found: {job_id}")
+    if not job.log_path:
+        return JSONResponse({"log": "", "status": job.status.value})
+    try:
+        text = Path(job.log_path).read_text()
+    except OSError:
+        text = ""
+    return JSONResponse({"log": text, "status": job.status.value})
+
+
+async def _stream_job(job_id: str) -> AsyncIterator[bytes]:
+    """Server-sent-events stream for a job's log and status updates."""
+    last_size = 0
+    last_status: Optional[str] = None
+    while True:
+        job = jobs_service.get(job_id)
+        if job is None:
+            yield b"event: status\ndata: missing\n\n"
+            return
+
+        # Status transitions
+        if job.status.value != last_status:
+            yield f"event: status\ndata: {job.status.value}\n\n".encode()
+            last_status = job.status.value
+
+        # New log bytes
+        if job.log_path:
+            try:
+                size = Path(job.log_path).stat().st_size
+            except OSError:
+                size = 0
+            if size > last_size:
+                try:
+                    with Path(job.log_path).open("r") as f:
+                        f.seek(last_size)
+                        chunk = f.read(size - last_size)
+                except OSError:
+                    chunk = ""
+                last_size = size
+                for line in chunk.splitlines():
+                    # SSE data lines must not contain bare newlines in the data;
+                    # we emit one event per line.
+                    yield f"event: log\ndata: {line}\n\n".encode()
+
+        if job.is_terminal:
+            # Final flush then close.
+            yield f"event: status\ndata: {job.status.value}\n\n".encode()
+            return
+
+        await asyncio.sleep(0.4)
+
+
+@app.get("/api/jobs/{job_id}/stream")
+async def api_job_stream(job_id: str):
+    job = jobs_service.get(job_id)
+    if job is None:
+        raise HTTPException(404, f"job not found: {job_id}")
+    return StreamingResponse(
+        _stream_job(job_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # disable nginx buffering if proxied
+        },
+    )
+
+
+# --- Worker lifecycle ------------------------------------------------------
+
+@app.on_event("startup")
+def _start_worker():
+    worker_service.start()
+
+
+@app.on_event("shutdown")
+def _stop_worker():
+    worker_service.stop(timeout=1.0)
 
 
 # --- Per-run detail -------------------------------------------------------
