@@ -149,3 +149,29 @@ def create_project(
 
 def _looks_like_url(s: str) -> bool:
     return s.startswith(("http://", "https://", "git@", "ssh://"))
+
+
+def update_project_metadata(
+    name: str,
+    description: Optional[str] = None,
+    notes: Optional[str] = None,
+    projects_dir: Path = RAPTOR_PROJECTS_DIR,
+) -> None:
+    """Update editable fields on an existing project.json.
+
+    Preserves every other key (version, target, output_dir, created) so the
+    file still round-trips through raptor's ``validate_project`` check.
+    Only ``description`` and ``notes`` are writable from the UI today —
+    renaming and deleting remain CLI-only.
+    """
+    projects_dir = Path(projects_dir)
+    project_file = projects_dir / f"{name}.json"
+    if not project_file.is_file():
+        raise ProjectCreateError(f"Project '{name}' not found at {project_file}.")
+
+    data = json.loads(project_file.read_text())
+    if description is not None:
+        data["description"] = description
+    if notes is not None:
+        data["notes"] = notes
+    project_file.write_text(json.dumps(data, indent=2) + "\n")
