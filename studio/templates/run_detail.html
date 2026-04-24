@@ -173,6 +173,73 @@ flowchart LR
 </div>
 {% endif %}
 
+{% if forensics and forensics.has_any %}
+<div class="card" style="margin-bottom: 16px;">
+  <h2 style="margin: 0 0 12px; font-size: 14px;">Forensic investigation walkthrough</h2>
+
+  {% if forensics.research_question %}
+  <div style="margin-bottom: 16px; padding: 12px; background: var(--accent-r); border-radius: 6px;">
+    <div style="font-size: 10px; color: var(--fg3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">Research question</div>
+    <div style="font-size: 14px; font-weight: 500;">{{ forensics.research_question }}</div>
+  </div>
+  {% endif %}
+
+  {% if forensics.evidence_summary %}
+  <div style="margin-bottom: 16px;">
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">Evidence collected</div>
+    <table style="font-size: 12px;">
+      <thead><tr><th>Source</th><th>Count</th></tr></thead>
+      <tbody>
+      {% for source, count in forensics.evidence_summary %}
+        <tr>
+          <td class="mono">{{ source }}</td>
+          <td class="mono" style="font-family: 'JetBrains Mono', monospace;">{{ count }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if forensics.hypotheses %}
+  <div style="margin-bottom: 16px;">
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">Hypothesis iterations ({{ forensics.hypotheses|length }})</div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+    {% for h in forensics.hypotheses %}
+      <details style="border: 1px solid var(--border-l); border-radius: 6px; padding: 8px 12px; background: var(--bg);">
+        <summary style="cursor: pointer; display: flex; gap: 8px; align-items: center;">
+          <span class="mono" style="font-size: 11px; color: var(--fg3); width: 24px;">#{{ h.order or "?" }}</span>
+          <span style="flex: 1; font-size: 13px;">{{ h.title }}</span>
+          {% if h.status == "confirmed" %}<span class="badge b-ok">confirmed</span>
+          {% elif h.status == "rejected" %}<span class="badge b-failed">rejected</span>
+          {% else %}<span class="badge b-neutral">{{ h.status }}</span>{% endif %}
+        </summary>
+        <pre style="margin: 10px 0 0; font-size: 11px; max-height: 320px; overflow: auto; background: var(--bg3);">{{ h.content }}</pre>
+      </details>
+    {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if forensics.evidence_verification %}
+  <div style="margin-bottom: 16px;">
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">Evidence verification</div>
+    <details>
+      <summary style="cursor: pointer; font-size: 12px;">Show verification report</summary>
+      <pre style="margin-top: 8px; font-size: 11px; max-height: 300px; overflow: auto;">{{ forensics.evidence_verification }}</pre>
+    </details>
+  </div>
+  {% endif %}
+
+  {% if forensics.forensic_report %}
+  <div style="padding: 14px; background: var(--bg3); border-radius: 6px; border: 1px solid var(--border);">
+    <div style="font-size: 11px; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">Final forensic report</div>
+    <pre style="font-size: 12px; max-height: 520px; overflow: auto; margin: 0; background: transparent;">{{ forensics.forensic_report }}</pre>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
 {% if summary.has_reports %}
 <div class="card" style="margin-bottom: 16px;">
   <h2 style="margin: 0 0 10px; font-size: 14px;">Report files</h2>

@@ -40,6 +40,7 @@ from studio.services.run_spec import (
     is_runnable,
 )
 from studio.services.diff_reader import compute_diff
+from studio.services.forensics_reader import is_forensics_run_dir, load_forensics_bundle
 from studio.services.validation_reader import load_validation_bundle, summarize_run
 from studio.services.models_reader import (
     PROVIDERS,
@@ -546,11 +547,14 @@ def run_detail(request: Request, name: str, run_name: str):
     run = _require_run(proj, run_name)
     summary = summarize_run(run.directory)
     bundle = load_validation_bundle(run.directory) if summary.has_validation_bundle else None
+    forensics = None
+    if run.kind == "oss-forensics" or is_forensics_run_dir(run.directory):
+        forensics = load_forensics_bundle(run.directory)
     return templates.TemplateResponse(
         request, "run_detail.html",
         _project_ctx(
             proj, active_stage="runs",
-            run=run, summary=summary, bundle=bundle,
+            run=run, summary=summary, bundle=bundle, forensics=forensics,
         ),
     )
 
