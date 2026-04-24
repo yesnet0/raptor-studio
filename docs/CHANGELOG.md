@@ -4,7 +4,14 @@ Reverse-chronological. Each entry is one commit on `main`. Test counts are cumul
 
 ## 2026-04-23
 
-### (next) — Embed CodeQL dataflow SVGs inline on run detail
+### (latest) — Render raptor markdown reports as HTML
+
+- `services/markdown_render.py` wraps Python `markdown` with `extra`, `sane_lists`, `admonition` extensions. Converter cached via `lru_cache` + `.reset()` between calls.
+- New `.markdown-body` CSS block in `base.html` with restrained, design-system-matched heading sizes / code fence / table / link styling.
+- `run_detail.html` now renders validation-report.md, forensic-report.md, and each hypothesis iteration via the new `| md | safe` Jinja filter. Each block has a "view raw →" link to the underlying file.
+- Tests: 150 → 157.
+
+### 92b1187 — Embed CodeQL dataflow SVGs inline on run detail
 
 - `services/validation_reader` detects `dataflow_*.svg` + paired `.json` in CodeQL run dirs.
 - New safe file-serving route `GET /projects/{name}/runs/{run_name}/files/{filename:path}` with path-traversal check and extension whitelist (svg / png / md / json / sarif / txt).

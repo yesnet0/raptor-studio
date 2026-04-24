@@ -118,14 +118,15 @@ A full list lives in `docs/CHANGELOG.md`. High-level:
 | Newcomer UX pass | `ace3ef8` | Welcome zero-state, progressive disclosure, adaptive sidebar, contextual CTAs, glossary + abbr tooltips |
 | Docs: PRD + CHANGELOG | `0f10c50` | Canonical product doc, commit log, refreshed README and UX narrative |
 | Option-matrix alignment | `1a1b686` | `corpus_dir`, `vendor_report_url`; rename `binary` → `source_repo`; trigger forms pre-fill from project-level defaults |
-| Dataflow SVGs | (latest) | Embed CodeQL `dataflow_*.svg` inline on run detail; safe file-serving route with path-traversal + extension-whitelist protection |
+| Dataflow SVGs | `92b1187` | Embed CodeQL `dataflow_*.svg` inline on run detail; safe file-serving route with path-traversal + extension-whitelist protection |
+| Markdown rendering | (latest) | `*.md` reports render as HTML with fenced code / tables / headings instead of raw `<pre>`; "view raw" escape hatch per block |
 
 ## 8. Open work
 
 Ordered by expected value.
 
 1. ~~**Dataflow SVG rendering**~~ ✅ shipped — CodeQL run dirs' `dataflow_*.svg` now render inline on run detail with paired-JSON links.
-2. **Markdown rendering** for `*.md` reports (validation-report, forensic-report, root-cause hypotheses) — currently raw `<pre>`.
+2. ~~**Markdown rendering** for `*.md` reports~~ ✅ shipped — validation-report / forensic-report / hypothesis iterations now render as structured HTML with a "view raw" escape hatch.
 3. **Coverage view** — `gcov`/`checked_by` merge per project, with "which files did raptor actually read?" heatmap.
 4. **Job history KPIs** on Dashboard — e.g. tokens used today, $ spent this week, most-common failure kind.
 5. **Per-finding persona invocation** — a "Re-run with Exploit Developer persona" button that kicks off a scoped job.
