@@ -39,6 +39,7 @@ from studio.services.run_spec import (
     build_command,
     is_runnable,
 )
+from studio.services.diff_reader import compute_diff
 from studio.services.validation_reader import load_validation_bundle, summarize_run
 from studio.services.models_reader import (
     PROVIDERS,
@@ -215,6 +216,36 @@ def project_runs(request: Request, name: str):
     return templates.TemplateResponse(
         request, "project_runs.html",
         _project_ctx(proj, active_stage="runs", run_lane=lambda r: lane_for(r.kind)),
+    )
+
+
+@app.get("/projects/{name}/diff", response_class=HTMLResponse)
+def project_diff(request: Request, name: str, a: str = "", b: str = ""):
+    proj = _require_project(name)
+    all_runs = proj.runs()
+    run_a = next((r for r in all_runs if r.name == a), None) if a else None
+    run_b = next((r for r in all_runs if r.name == b), None) if b else None
+
+    diff = None
+    error: Optional[str] = None
+    if a and not run_a:
+        error = f"Run A not found: {a}"
+    elif b and not run_b:
+        error = f"Run B not found: {b}"
+    elif a and b and a == b:
+        error = "Pick two different runs."
+    elif run_a and run_b:
+        diff = compute_diff(
+            run_a.name, run_a.findings(),
+            run_b.name, run_b.findings(),
+        )
+
+    return templates.TemplateResponse(
+        request, "project_diff.html",
+        _project_ctx(
+            proj, active_stage="diff",
+            a=run_a, b=run_b, diff=diff, error=error,
+        ),
     )
 
 
