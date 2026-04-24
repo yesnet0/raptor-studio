@@ -63,8 +63,10 @@ nav.top {
 }
 nav.top .brand {
   display: flex; align-items: center; gap: 10px;
-  font-weight: 700; font-size: 15px; letter-spacing: -0.01em;
+  font-size: 15px; letter-spacing: -0.01em;
 }
+nav.top .brand .wordmark        { font-weight: 400; color: var(--fg); }
+nav.top .brand .wordmark strong { font-weight: 700; }
 nav.top .brand .mark {
   width: 32px; height: 32px;
   display: inline-flex; align-items: center; justify-content: center;
@@ -271,8 +273,8 @@ footer.foot {
 <body>
 <nav class="top">
   <div class="brand">
-    <span class="mark"><img src="/static/velociraptor.png" alt="raptor studio"></span>
-    <span>{{ app_title }}</span>
+    <span class="mark"><img src="/static/velociraptor.png" alt="raptorstudio"></span>
+    <span class="wordmark"><strong>raptor</strong>studio</span>
   </div>
   <div class="links">
     <a href="/"{% if request.url.path == "/" %} class="active"{% endif %}>Dashboard</a>
