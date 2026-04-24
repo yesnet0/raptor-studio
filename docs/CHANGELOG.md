@@ -4,6 +4,14 @@ Reverse-chronological. Each entry is one commit on `main`. Test counts are cumul
 
 ## 2026-04-23
 
+### (next) — Version pill reads raptor's live version
+
+- New `services/raptor_version.py` regex-scrapes `VERSION = "..."` from `$RAPTOR_HOME/core/config.py`. Fallback: `git describe --tags --always` inside the raptor checkout. `lru_cache`d per process.
+- `_ctx()` in `app.py` exposes the scraped string to every template.
+- `base.html` renders `v{{ raptor_version }}` when non-empty; omits the pill when raptor can't be located.
+- Zero hardcoded version strings in studio — what raptor says is what we show.
+- Tests: 157 → 161 (four new in `test_raptor_version`).
+
 ### cd58dc9 — Top-right version + theme toggle: match vulngraph's design
 
 - Replaced prior pixel-art interpretation with vulngraph's exact CSS + markup (fetched from `bertha.tailc60d40.ts.net:8888/settings`).

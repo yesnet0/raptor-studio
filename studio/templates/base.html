@@ -281,7 +281,9 @@ footer.foot {
     <a href="/settings"{% if request.url.path.startswith("/settings") %} class="active"{% endif %}>Settings</a>
   </div>
   <div class="spacer"></div>
-  <span class="version"><span class="dot"></span>v0.0.1</span>
+  {% if raptor_version %}
+  <span class="version" title="raptor version (from $RAPTOR_HOME/core/config.py)"><span class="dot"></span>v{{ raptor_version }}</span>
+  {% endif %}
   <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark / light mode">◐</button>
 </nav>
 

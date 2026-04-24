@@ -44,6 +44,7 @@ from studio.services.diff_reader import compute_diff
 from studio.services.forensics_reader import is_forensics_run_dir, load_forensics_bundle
 from studio.services.markdown_render import render as render_markdown
 from studio.services.personas import all_personas, personas_for_finding
+from studio.services.raptor_version import raptor_version
 from studio.services.project_extras import (
     PROJECT_TYPE_DESCRIPTIONS,
     PROJECT_TYPE_LABELS,
@@ -86,7 +87,12 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 
 
 def _ctx(**kwargs) -> dict:
-    return {"app_title": APP_TITLE, "app_tagline": APP_TAGLINE, **kwargs}
+    return {
+        "app_title": APP_TITLE,
+        "app_tagline": APP_TAGLINE,
+        "raptor_version": raptor_version(),
+        **kwargs,
+    }
 
 
 def _project_ctx(project: RaptorProject, active_stage: str, **extras) -> dict:
