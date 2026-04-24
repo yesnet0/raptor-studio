@@ -64,6 +64,12 @@ class RaptorRun:
         return classify_kind(self.command, self.directory.name)
 
     def findings(self) -> list[dict]:
+        """Return findings from this run.
+
+        Precedence: any JSON file in FINDINGS_FILENAMES (rich, post-validated)
+        → fall back to parsing SARIF directly (raw scanner output). SARIF
+        findings are normalized via sarif_reader.parse_run_sarif.
+        """
         for filename in FINDINGS_FILENAMES:
             path = self.directory / filename
             if not path.is_file():
@@ -78,7 +84,9 @@ class RaptorRun:
                 for key in ("findings", "items", "results"):
                     if isinstance(data.get(key), list):
                         return data[key]
-        return []
+        # Late import to avoid circular dependency at module load.
+        from studio.services.sarif_reader import parse_run_sarif
+        return parse_run_sarif(self.directory)
 
 
 @dataclass

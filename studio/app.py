@@ -28,6 +28,7 @@ from studio.services.artifacts_reader import (
     list_reports,
     tail_activity,
 )
+from studio.services.validation_reader import summarize_run
 from studio.services.models_reader import (
     PROVIDERS,
     ROLE_DESCRIPTIONS,
@@ -302,14 +303,32 @@ def project_settings(request: Request, name: str):
 
 # --- Per-run detail -------------------------------------------------------
 
+def _require_run(proj: RaptorProject, run_name: str):
+    run = next((r for r in proj.runs() if r.name == run_name), None)
+    if run is None:
+        raise HTTPException(404, f"run not found: {run_name}")
+    return run
+
+
+@app.get("/projects/{name}/runs/{run_name}", response_class=HTMLResponse)
+def run_detail(request: Request, name: str, run_name: str):
+    proj = _require_project(name)
+    run = _require_run(proj, run_name)
+    return templates.TemplateResponse(
+        request, "run_detail.html",
+        _project_ctx(
+            proj, active_stage="runs",
+            run=run, summary=summarize_run(run.directory),
+        ),
+    )
+
+
 @app.get(
     "/projects/{name}/runs/{run_name}/findings", response_class=HTMLResponse
 )
 def run_findings(request: Request, name: str, run_name: str):
     proj = _require_project(name)
-    run = next((r for r in proj.runs() if r.name == run_name), None)
-    if run is None:
-        raise HTTPException(404, f"run not found: {run_name}")
+    run = _require_run(proj, run_name)
     return templates.TemplateResponse(
         request, "findings.html",
         _project_ctx(

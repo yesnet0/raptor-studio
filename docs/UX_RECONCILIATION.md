@@ -140,15 +140,19 @@ Two sections:
 
 We do not store API keys in plaintext on disk from the web UI unless the user explicitly chooses "store in file" — otherwise we write them to the system keyring or accept them only as env refs (`${ANTHROPIC_API_KEY}`).
 
-## What this iteration ships
+## What shipped in this iteration
 
-Grouped by commit:
+All of the below landed across two commits (`42ac26a`, `a follow-up`):
 
-1. **IA reshape**: design doc, `project_base.html` shared shell with the new sidebar, `project_overview.html` with lane cards, run-kind detection in `raptor_reader`, empty-state pages for each lane stage, route additions.
-2. **Findings upgrade**: raptor-literate findings template (`final_status` / `verdict` × `impact` / `chain_breaks` tagged / validation stage trail), new `validation_reader` service, SARIF ingest reader.
-3. **Settings page**: `models_reader` that reads + writes `~/.config/raptor/models.json`, settings template with role cards, budget input, `/settings` routes.
-4. **Exploits + patches browsers**: read artifact directories under run dirs; render code with metadata header.
-5. **Tests + docs cleanup.**
+1. **IA reshape.** `project_base.html` shared shell with the three-lane sidebar, `project.html` rewritten as a lane-cards overview with next-action CTA, run-kind detection in `services/run_kind.py`, per-stage pages for every navigation item.
+2. **Findings upgrade.** Raptor-literate findings template (`final_status` / `verdict` × `impact` / Stage E feasibility block with protections + exploitation_paths + chain_breaks + what_would_help), finding detail extracted to `_finding_detail.html` and shared between per-run and project-wide findings views.
+3. **SARIF fallback.** `services/sarif_reader.py` parses Semgrep + CodeQL SARIF 2.1.0 into the same shape the rest of the UI expects. `RaptorRun.findings()` falls back to SARIF when no `findings.json` is present, so a plain `/scan` run renders its findings with zero extra config.
+4. **Run-detail page.** `/projects/{name}/runs/{run}` shows kind + command + artifact summary (findings count, exploits, patches, scan metrics if present, fuzzing report if present, validation bundle counts). Deep-links down to findings / exploits / patches.
+5. **Validation bundle reader.** `services/validation_reader.py` loads `findings.json`, `attack-tree.json`, `hypotheses.json`, `disproven.json`, `attack-paths.json`, `attack-surface.json`, `validation-report.md` in one call. `summarize_run()` feeds the run-detail page.
+6. **Settings page.** `services/models_reader.py` reads + writes `~/.config/raptor/models.json` in raptor's exact schema. Four role cards (analysis / code / consensus / fallback), env-var status table, budget cap display. API-key env refs (`${ANTHROPIC_API_KEY}`) preserved; raw keys masked in display.
+7. **Artifacts browsers.** Exploits, Patches, Reports, Activity pages walk the well-known subdirs of each run.
+8. **Tests.** 23 → 78 (16 run_kind, 10 models_reader, 7 artifacts_reader, 6 sarif_reader, 6 validation_reader, 9 existing). All green.
+9. **End-to-end.** 10/10 content-checks pass against a seeded project with a SARIF-only scan, a rich `/validate` run (full artifact bundle), and a `/fuzz` run (fuzzing_report + AFL crashes).
 
 ## What this iteration does not ship (punch-list for later)
 

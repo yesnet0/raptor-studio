@@ -48,7 +48,7 @@
     {% for r in stage_runs %}
       <tr>
         <td class="mono" style="font-size: 12px;">
-          <a href="/projects/{{ project.name }}/runs/{{ r.name }}/findings">{{ r.name }}</a>
+          <a href="/projects/{{ project.name }}/runs/{{ r.name }}">{{ r.name }}</a>
         </td>
         <td class="mono" style="font-size: 11px; color: var(--fg2); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ r.command }}">{{ r.command }}</td>
         <td class="mono" style="font-size: 12px; color: var(--fg3);">{{ r.timestamp }}</td>

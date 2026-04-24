@@ -31,7 +31,7 @@
     {% for r in runs %}
       <tr>
         <td class="mono" style="font-size: 12px;">
-          <a href="/projects/{{ project.name }}/runs/{{ r.name }}/findings">{{ r.name }}</a>
+          <a href="/projects/{{ project.name }}/runs/{{ r.name }}">{{ r.name }}</a>
         </td>
         <td><span class="badge b-neutral">{{ r.kind }}</span></td>
         <td style="font-size: 11px; color: var(--fg3);">{{ run_lane(r) }}</td>
